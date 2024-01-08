@@ -116,7 +116,7 @@ export class Character {
     movementVector.y = 0
 
     const newPosition = this.mesh.position.clone().add(movementVector)
-    this.mesh.position.lerp(newPosition, 0.05)
+    this.mesh.position.lerp(newPosition, 0.07)
 
     this.controls.updateCamera()
 

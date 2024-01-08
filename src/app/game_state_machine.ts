@@ -94,7 +94,6 @@ export class PlayingState extends GameStateMachineState {
   update(deltaTime: number, elapsedTime: number) {
     this.duration -= deltaTime
     document.querySelector<HTMLElement>('#timer')!.innerHTML = this.duration.toFixed(2)
-    character.update(deltaTime, elapsedTime)
 
     if (this.duration <= 0) {
       this.machine.setState('game-over')
