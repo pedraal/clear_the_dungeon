@@ -1,14 +1,14 @@
 import { Mapping, Mappings } from "./props/mapping"
 
 export class GameMap {
-  generateFloor() {
-    const cellSide = 4
-    const xInterval = [-20, 20]
-    const zInterval = [-10, 40]
+  cellSide = 4
+  xBoundings = [-5, 5]
+  zBoundings = [-2, 10]
 
-    for (let i = xInterval[0]; i <= xInterval[1]; i += cellSide) {
-      for (let j = zInterval[0]; j <= zInterval[1]; j += cellSide) {
-        new Mapping({ name: Mappings.Floor_Dirt, position: { x: i, y: -1, z: j } })
+  generateFloor() {
+    for (let i = this.xBoundings[0]; i <= this.xBoundings[1]; i++) {
+      for (let j = this.zBoundings[0]; j <= this.zBoundings[1]; j++) {
+        new Mapping({ name: Mappings.Floor_Dirt, position: { x: i * this.cellSide, y: -1, z: j * this.cellSide } })
       }
     }
   }

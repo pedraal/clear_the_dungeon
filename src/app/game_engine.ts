@@ -9,6 +9,7 @@ import { Updatable } from './types'
 import { GameStateMachine } from './game_state_machine'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { OverlordControls } from './controls/overlord_controls'
+import { GameMap } from './game_map'
 
 interface Params {
   physicsDebugger?: boolean
@@ -37,6 +38,8 @@ export class GameEngine {
   camera: THREE.PerspectiveCamera
   stateMachine: GameStateMachine
   controls: ThirdPersonControls | OverlordControls
+  map: GameMap
+  character: Character
 
   constructor(params: Params) {
     this.params = params
@@ -61,6 +64,7 @@ export class GameEngine {
     this.initGlobalLights()
     this.initGlobalHelpers()
     this.initControls()
+    this.initMap()
   }
 
   loadModels() {
@@ -149,6 +153,25 @@ export class GameEngine {
       this.controls = new OverlordControls(this)
   }
 
+  private initMap() {
+    this.map = new GameMap()
+  }
+
+  initCharacter() {
+    const controls = (this.controls instanceof ThirdPersonControls) ? this.controls : undefined
+
+    this.character = new Character({
+      name: Character.models[0],
+      position: {
+        x: 0,
+        y: 2,
+        z: 0
+      },
+      orientation: 0,
+      controls
+    })
+  }
+
   private onResize() {
     this.computeViewport()
     this.camera.aspect = this.viewport.width / this.viewport.height
@@ -174,7 +197,6 @@ export class GameEngine {
   private updatePhysics(deltaTime: number) {
     this.world.step(1 / 60, deltaTime, 1000)
     this.physicsDebugger?.update()
-
   }
 
   private updateRenderer(deltaTime: number, elapsedTime: number) {
