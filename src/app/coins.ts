@@ -16,7 +16,7 @@ export class Coins {
     this.score = 0
     this.nextCoinAt = 0
     GameEngine.instance.updatables.push(this)
-    document.querySelector('#score')!.innerHTML = this.score.toString()
+    this.renderScore()
   }
 
   update(_dt, elapsedTime: number) {
@@ -52,8 +52,13 @@ export class Coins {
         this.score += 1
         break
     }
-    document.querySelector('#score')!.innerHTML = this.score.toString()
+    this.renderScore()
     this.removeCoin(mapping)
+  }
+
+  private renderScore() {
+    document.querySelectorAll('.score').forEach(el => el.innerHTML = this.score.toString())
+
   }
 
   private generateCoin() {
