@@ -1,17 +1,18 @@
-import { GameEngine } from "./game_engine";
-import { Mapping, Mappings } from "./props/mapping";
+import * as THREE from "three"
+import { GameEngine } from "./game_engine"
+import { Mapping, Mappings } from "./props/mapping"
 
 export class Coins {
   static MappingNames = [Mappings.Coin_A, Mappings.Coin_B, Mappings.Coin_C]
-  engine: GameEngine;
-  mappings: Mapping[];
-  elapsedTicks: number;
-  score: number;
-  nextCoinAt: number;
+  engine: GameEngine
+  coins: Mapping[]
+  elapsedTicks: number
+  score: number
+  nextCoinAt: number
 
   constructor(engine: GameEngine) {
     this.engine = engine
-    this.mappings = []
+    this.coins = []
     this.elapsedTicks = 0
     this.score = 0
     this.nextCoinAt = 0
@@ -19,15 +20,17 @@ export class Coins {
     this.renderScore()
   }
 
-  update(_dt: number, elapsedTime: number) {
+  update(dt: number, elapsedTime: number) {
     if (elapsedTime > this.nextCoinAt) {
       this.generateCoin()
       const randomTime = Math.random() * 0.5 + 0.5
       this.nextCoinAt = elapsedTime + randomTime
     }
 
-    this.mappings.forEach(mapping => {
-      mapping.mesh.position.z -= 0.1
+    const velocity = dt * 7
+    this.coins.forEach(mapping => {
+      const movementVector = new THREE.Vector3(0, 0, -1)
+      mapping.mesh.position.add(movementVector.multiplyScalar(velocity))
       const coinPosition = mapping.mesh.position.clone()
       if (mapping.mesh.position.z < this.unspawnZ) {
         this.removeCoin(mapping)
@@ -65,16 +68,12 @@ export class Coins {
 
   private generateCoin() {
     const randomCoin = Math.floor(Math.random() * Coins.MappingNames.length)
-    this.mappings.push(new Mapping({ name: Coins.MappingNames[randomCoin], position: { x: this.nextCoinPositionX(), y: 1, z: this.spawnZ } }))
+    this.coins.push(new Mapping({ name: Coins.MappingNames[randomCoin], position: { x: this.spawnX(), y: 1, z: this.spawnZ } }))
   }
 
   private removeCoin(coin: Mapping) {
-    this.mappings = this.mappings.filter(m => m !== coin)
+    this.coins = this.coins.filter(m => m !== coin)
     coin.remove()
-  }
-
-  private nextCoinPositionX() {
-    return Math.floor(Math.random() * 14) - 7
   }
 
   private get target() {
@@ -89,8 +88,13 @@ export class Coins {
     return (this.engine.map.zBoundings[0] - 1) * this.engine.map.cellSide
   }
 
+  private spawnX() {
+    const range = 15
+    return Math.floor(Math.random() * range) - (range/2)
+  }
+
   remove() {
-    this.mappings.forEach(mapping => mapping.remove())
+    this.coins.forEach(mapping => mapping.remove())
     GameEngine.instance.updatables = GameEngine.instance.updatables.filter(u => u !== this)
   }
 }

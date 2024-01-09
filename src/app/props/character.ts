@@ -106,17 +106,15 @@ export class Character {
 
   update(dt: number, elapsedTime: number) {
     this.mixer.update(dt)
-    this.handleMovement()
+    this.handleMovement(dt)
   }
 
-  private handleMovement() {
+  private handleMovement(dt: number) {
     if (!this.controls) return
 
     const movementVector = this.controls.movementVector.clone()
-    movementVector.y = 0
-
-    const newPosition = this.mesh.position.clone().add(movementVector)
-    this.mesh.position.lerp(newPosition, 0.07)
+    const velocity = 6 * dt
+    this.mesh.position.add(movementVector.clone().multiplyScalar(velocity))
 
     this.controls.updateCamera()
 
