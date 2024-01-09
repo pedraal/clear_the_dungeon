@@ -1,39 +1,40 @@
-# Dungeon runner
+# Clear the Dungeon
 
 ## Description
-This game is a Subway surfer like game with a medieval theme. The player has to avoid obstacles, collect coins to get a high score and kill enemies to get a higher score. The player can also use powerups to get a higher score. The game is over when the player dies.
+This game is about gathering coins and cleaning the dungeon from the monsters that live in it as fast as possible !
 
 ## Credits
-- [Subway Surfers](https://subwaysurf.fandom.com/wiki/Subway_Surfers_Wiki)
 - [KayKit](https://kaylousberg.itch.io/) for the game assets
 
 ## TODOS
-### Must Have
+### V1
 - [ ] `Loading` screen
 - [ ] `Main Menu` screen
 - [ ] `Game Over` screen
-- [ ] Map procedural generation
+- [ ] Static maps
 - [ ] Time scoring
-- [ ] Coins scoring
+- [ ] Coins gathering
 - [ ] Obstacles
+- [ ] Basic movements (up, down, left, right, jump)
 - [ ] Keyboard controls
 
-### Nice To Have
+### V2
 - [ ] Powerups:
     - [ ] Speed Boost
     - [ ] Shield
-    - [ ] Extra Life
-    - [ ] Temporary Score Multiplier
+    - [ ] Time bonus
+    - [ ] Attack Boost
 - [ ] Sound effects
-- [ ] Different characters
-- [ ] Enemies
-- [ ] Player attacks to kill enemies
+- [ ] Enemies + Attacks (ennemies and player)
 - [ ] Local score board
-- [ ] Skillset for characters
 - [ ] Touch / gesture controls
-- [ ] Several map themes
+
+### V3
+- [ ] Different characters
+- [ ] Skillset for characters
+- [ ] Procedural map generation
 
 ### Tech stuff
 - [ ] Decouple the controls from the camera logic
-- [ ] Use a `StateMachine` to handle the game states
+- [x] Use a `StateMachine` to handle the game states
 - [ ] Encapsulate in a Tauri app
