@@ -10,6 +10,7 @@ import { GameStateMachine } from './game_state_machine'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { OverlordControls } from './controls/overlord_controls'
 import { GameMap } from './game_map'
+import { Score } from './score'
 
 interface Params {
   physicsDebugger?: boolean
@@ -40,6 +41,7 @@ export class GameEngine {
   controls: ThirdPersonControls | OverlordControls
   map: GameMap
   character: Character
+  score: Score
 
   constructor(params: Params) {
     this.params = params
@@ -65,6 +67,7 @@ export class GameEngine {
     this.initGlobalHelpers()
     this.initControls()
     this.initMap()
+    this.initScore()
   }
 
   loadModels() {
@@ -155,6 +158,10 @@ export class GameEngine {
 
   private initMap() {
     this.map = new GameMap()
+  }
+
+  private initScore() {
+    this.score = new Score()
   }
 
   initCharacter() {

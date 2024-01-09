@@ -66,6 +66,7 @@ export class PlayingState extends GameStateMachineState {
   coins: Coins
 
   enter() {
+    this.machine.engine.score.reset()
     if (this.machine.engine.controls instanceof ThirdPersonControls) {
       this.machine.engine.controls.disabledAxes = []
       this.machine.engine.controls.lookBackward = false

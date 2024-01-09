@@ -17,7 +17,6 @@ export class Coins {
     this.score = 0
     this.nextCoinAt = 0
     GameEngine.instance.updatables.push(this)
-    this.renderScore()
   }
 
   update(dt: number, elapsedTime: number) {
@@ -48,22 +47,16 @@ export class Coins {
   private hit(mapping: Mapping) {
     switch (mapping.mesh.name) {
       case 'Coin_A':
-        this.score += 3
+        this.engine.score.incrementBy(3)
         break
       case 'Coin_B':
-        this.score += 2
+        this.engine.score.incrementBy(2)
         break
       case 'Coin_C':
-        this.score += 1
+        this.engine.score.incrementBy(1)
         break
     }
-    this.renderScore()
     this.removeCoin(mapping)
-  }
-
-  private renderScore() {
-    document.querySelectorAll('.score').forEach(el => el.innerHTML = this.score.toString())
-
   }
 
   private generateCoin() {

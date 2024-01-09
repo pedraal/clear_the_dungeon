@@ -1,8 +1,6 @@
-/* eslint-disable no-new */
 import { GameEngine } from './game_engine'
 
 new GameEngine({
-  // debugUi: true,
+  debugUi: import.meta.env.DEV,
   controls: 'third-person',
-  // gridHelper: true,
 })
