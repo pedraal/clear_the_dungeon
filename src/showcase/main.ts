@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Showcase } from '.'
+import { Showcase } from '../app/showcase'
 
 new Showcase({
   engine: {

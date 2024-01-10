@@ -1,9 +1,79 @@
-import { Game } from '.'
-import { ThirdPersonControls } from '../controls/third_person_controls'
-import { State, StateMachine } from '../utils/state_machine'
-import { Coins } from './coins'
+import { OverlordControls } from './controls/overlord_controls'
+import { ThirdPersonControls } from './controls/third_person_controls'
+import { Engine, Params as EngineParams } from './engine'
+import { Coins } from './game/coins'
+import { GameMap } from './game/game_map'
+import { Score } from './game/score'
+import { Character } from './props/character'
+import { State, StateMachine } from './utils/state_machine'
 
-export class GameStateMachine extends StateMachine {
+interface Params {
+  engine?: EngineParams
+  controls: 'third-person' | 'overlord'
+}
+
+export class Game {
+  params: Params
+  engine: Engine
+  stateMachine: GameStateMachine
+  controls: ThirdPersonControls | OverlordControls
+  map: GameMap
+  character: Character
+  score: Score
+
+  constructor(params: Params) {
+    this.params = params
+    this.engine = new Engine(this.params.engine || {})
+    this.stateMachine = new GameStateMachine(this)
+    this.stateMachine.setState('loading')
+  }
+
+  init() {
+    this.initControls()
+    this.initMap()
+    this.initScore()
+  }
+
+  private initControls() {
+    if (this.params.controls === 'third-person')
+      this.controls = new ThirdPersonControls({
+        engine: this.engine,
+      })
+    else if (this.params.controls === 'overlord') this.controls = new OverlordControls(this.engine)
+  }
+
+  private initMap() {
+    this.map = new GameMap(this.engine)
+  }
+
+  private initScore() {
+    this.score = new Score()
+  }
+
+  initCharacter() {
+    const controls = this.controls instanceof ThirdPersonControls ? this.controls : undefined
+
+    this.character = new Character({
+      engine: this.engine,
+      name: Character.models[0],
+      position: {
+        x: 0,
+        y: 2,
+        z: 0,
+      },
+      orientation: 0,
+      controls,
+    })
+  }
+
+  tick() {
+    this.engine.tick((dt, et) => {
+      this.stateMachine.currentState?.update(dt, et)
+    })
+  }
+}
+
+class GameStateMachine extends StateMachine {
   game: Game
   constructor(game: Game) {
     super()
@@ -19,11 +89,11 @@ export class GameStateMachine extends StateMachine {
   }
 }
 
-class GameStateMachineState extends State {
+class GameState extends State {
   machine: GameStateMachine
 }
 
-export class LoadingState extends GameStateMachineState {
+class LoadingState extends GameState {
   name = 'loading'
 
   enter() {
@@ -43,7 +113,7 @@ export class LoadingState extends GameStateMachineState {
   }
 }
 
-export class IdleState extends GameStateMachineState {
+class IdleState extends GameState {
   name = 'idle'
 
   enter() {
@@ -70,7 +140,7 @@ export class IdleState extends GameStateMachineState {
   }
 }
 
-export class PlayingState extends GameStateMachineState {
+class PlayingState extends GameState {
   name = 'playing'
   duration = 60
   coins: Coins
@@ -109,7 +179,7 @@ export class PlayingState extends GameStateMachineState {
   }
 }
 
-export class GameOverState extends GameStateMachineState {
+class GameOverState extends GameState {
   name = 'game-over'
   duration = 5
 

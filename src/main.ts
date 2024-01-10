@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { Game } from '.'
+import { Game } from './app/game'
 
 new Game({
   engine: {
