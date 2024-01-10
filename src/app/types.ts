@@ -1,6 +1,11 @@
 export interface Controls {
-  assignTarget(target: THREE.Object3D): void
+  forward: boolean
+  backward: boolean
+  left: boolean
+  right: boolean
+  jump: boolean
   movementVector: THREE.Vector3
+  assignTarget(target: THREE.Object3D): void
   updateCamera(): void
 }
 

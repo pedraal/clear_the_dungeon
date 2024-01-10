@@ -3,6 +3,7 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { Engine } from '../engine'
 import { Controls } from '../types'
 import { GLTFUtils } from '../utils/gltf_utils'
+import { State, StateMachine } from '../utils/state_machine'
 
 interface Params {
   engine: Engine
@@ -44,8 +45,7 @@ export class Character {
   mixer: THREE.AnimationMixer
   model: GLTF
   controls: Controls | undefined
-  movementAnimation: THREE.AnimationClip
-  startedJumpingAt: number | undefined
+  stateMachine: CharacterStateMachine
 
   constructor(params: Params) {
     this.params = params
@@ -54,6 +54,9 @@ export class Character {
     this.initEquipement()
     this.initControls()
     this.initAnimations()
+
+    this.stateMachine = new CharacterStateMachine(this)
+    this.stateMachine.setState('idle')
 
     this.engine.scene.add(this.mesh)
     this.engine.updatables.push(this)
@@ -69,9 +72,7 @@ export class Character {
   }
 
   private initAnimations() {
-    this.movementAnimation = this.getAnimation('Idle')
     this.mixer = new THREE.AnimationMixer(this.mesh)
-    this.mixer.clipAction(this.movementAnimation).play()
   }
 
   private initControls() {
@@ -104,6 +105,7 @@ export class Character {
   update(dt: number, elapsedTime: number) {
     this.mixer.update(dt)
     this.handleMovement(dt)
+    this.stateMachine.currentState?.update(dt, elapsedTime)
   }
 
   private handleMovement(dt: number) {
@@ -114,25 +116,133 @@ export class Character {
     this.mesh.position.add(movementVector.clone().multiplyScalar(velocity))
 
     this.controls.updateCamera()
-
-    let movementAnimation: THREE.AnimationClip
-    if (movementVector.z === -1) movementAnimation = this.getAnimation('Walking_Backwards')
-    else if (movementVector.x === -1) movementAnimation = this.getAnimation('Running_Strafe_Right')
-    else if (movementVector.x === 1) movementAnimation = this.getAnimation('Running_Strafe_Left')
-    else if (movementVector.z === 1) movementAnimation = this.getAnimation('Running_A')
-    else movementAnimation = this.getAnimation('Idle')
-
-    if (this.movementAnimation !== movementAnimation) {
-      this.mixer.clipAction(movementAnimation).play()
-      this.mixer.clipAction(this.movementAnimation).stop()
-    }
-
-    this.movementAnimation = movementAnimation
   }
 
-  private getAnimation(name: string) {
+  getAnimation(name: string) {
     return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
   }
 
   static models = [randomSkin]
+}
+
+class CharacterStateMachine extends StateMachine {
+  character: Character
+  constructor(character: Character) {
+    super()
+    this.character = character
+    this.init()
+  }
+
+  init() {
+    this.addState('idle', IdleState)
+    this.addState('running', RunningState)
+    this.addState('strafing_left', StrafingLeftState)
+    this.addState('strafing_right', StrafingRightState)
+    this.addState('walking_backward', WalkingBackwardState)
+  }
+
+  get direction() {
+    const direction = {
+      forward: false,
+      backward: false,
+      left: false,
+      right: false,
+    }
+
+    if (!this.character.controls) return direction
+
+    const movementVector = this.character.controls.movementVector
+    if (movementVector.z === -1) {
+      direction.backward = true
+    } else if (movementVector.x === -1) {
+      direction.right = true
+    } else if (movementVector.x === 1) {
+      direction.left = true
+    } else if (movementVector.z === 1) {
+      direction.forward = true
+    }
+
+    return direction
+  }
+}
+
+class CharacterState extends State {
+  machine: CharacterStateMachine
+  animation: string
+
+  get action() {
+    return this.machine.character.mixer.clipAction(this.machine.character.getAnimation(this.animation))
+  }
+
+  enter(prevState?: CharacterState) {
+    if (prevState) {
+      this.action.time = 0.0
+      this.action.enabled = true
+      this.action.setEffectiveTimeScale(1.0)
+      this.action.setEffectiveWeight(1.0)
+      this.action.crossFadeFrom(prevState.action, 0.2, true)
+      this.action.play()
+    } else {
+      this.action.play()
+    }
+  }
+}
+
+class IdleState extends CharacterState {
+  name = 'idle'
+  animation = 'Idle'
+
+  update() {
+    if (this.machine.direction.forward) this.machine.setState('running')
+    else if (this.machine.direction.backward) this.machine.setState('walking_backward')
+    else if (this.machine.direction.left) this.machine.setState('strafing_left')
+    else if (this.machine.direction.right) this.machine.setState('strafing_right')
+  }
+}
+
+class RunningState extends CharacterState {
+  name = 'running'
+  animation = 'Running_A'
+
+  update() {
+    if (!this.machine.direction.forward) this.machine.setState('idle')
+    else if (this.machine.direction.backward) this.machine.setState('walking_backward')
+    else if (this.machine.direction.left) this.machine.setState('strafing_left')
+    else if (this.machine.direction.right) this.machine.setState('strafing_right')
+  }
+}
+
+class StrafingLeftState extends CharacterState {
+  name = 'strafing_left'
+  animation = 'Running_Strafe_Left'
+
+  update() {
+    if (!this.machine.direction.left) this.machine.setState('idle')
+    else if (this.machine.direction.backward) this.machine.setState('walking_backward')
+    else if (this.machine.direction.forward) this.machine.setState('running')
+    else if (this.machine.direction.right) this.machine.setState('strafing_right')
+  }
+}
+class StrafingRightState extends CharacterState {
+  name = 'strafing_right'
+  animation = 'Running_Strafe_Right'
+
+  update() {
+    if (!this.machine.direction.right) this.machine.setState('idle')
+    else if (this.machine.direction.backward) this.machine.setState('walking_backward')
+    else if (this.machine.direction.forward) this.machine.setState('running')
+    else if (this.machine.direction.left) this.machine.setState('strafing_left')
+  }
+}
+
+class WalkingBackwardState extends CharacterState {
+  name = 'walking_backward'
+  animation = 'Walking_Backwards'
+
+  update() {
+    if (!this.machine.direction.backward) this.machine.setState('idle')
+    else if (this.machine.direction.forward) this.machine.setState('running')
+    else if (this.machine.direction.left) this.machine.setState('strafing_left')
+    else if (this.machine.direction.right) this.machine.setState('strafing_right')
+  }
 }

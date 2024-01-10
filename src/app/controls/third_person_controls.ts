@@ -12,12 +12,12 @@ export class ThirdPersonControls {
   disabledAxes: ('x' | 'y' | 'z')[]
   camera: THREE.PerspectiveCamera
   target: THREE.Object3D<THREE.Object3DEventMap>
-  moveForward: boolean
-  moveBackward: boolean
-  moveLeft: boolean
-  moveRight: boolean
-  lookBackward: boolean
+  forward: boolean
+  backward: boolean
+  left: boolean
+  right: boolean
   jump: boolean
+  lookBackward: boolean
   movementVector: THREE.Vector3
 
   constructor(params: Params) {
@@ -28,10 +28,10 @@ export class ThirdPersonControls {
 
     this.movementVector = new THREE.Vector3(0, 0, 0)
 
-    this.moveForward = false
-    this.moveBackward = false
-    this.moveLeft = false
-    this.moveRight = false
+    this.forward = false
+    this.backward = false
+    this.left = false
+    this.right = false
     this.jump = false
 
     this.lookBackward = true
@@ -42,14 +42,14 @@ export class ThirdPersonControls {
 
   update(_dt: number, _elapsedTime: number) {
     if (!this.disabledAxes.includes('z')) {
-      if (this.moveForward) this.movementVector.z = 1
-      else if (this.moveBackward) this.movementVector.z = -1
+      if (this.forward) this.movementVector.z = 1
+      else if (this.backward) this.movementVector.z = -1
       else this.movementVector.z = 0
     } else this.movementVector.z = 0
 
     if (!this.disabledAxes.includes('x')) {
-      if (this.moveLeft) this.movementVector.x = 1
-      else if (this.moveRight) this.movementVector.x = -1
+      if (this.left) this.movementVector.x = 1
+      else if (this.right) this.movementVector.x = -1
       else this.movementVector.x = 0
     } else this.movementVector.x = 0
 
@@ -87,16 +87,20 @@ export class ThirdPersonControls {
   onKeyDown = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'z':
-        this.moveForward = true
+        this.backward = false
+        this.forward = true
         break
       case 's':
-        this.moveBackward = true
+        this.forward = false
+        this.backward = true
         break
       case 'q':
-        this.moveLeft = true
+        this.right = false
+        this.left = true
         break
       case 'd':
-        this.moveRight = true
+        this.left = false
+        this.right = true
         break
       case ' ':
         this.jump = true
@@ -107,16 +111,16 @@ export class ThirdPersonControls {
   onKeyUp = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'z':
-        this.moveForward = false
+        this.forward = false
         break
       case 's':
-        this.moveBackward = false
+        this.backward = false
         break
       case 'q':
-        this.moveLeft = false
+        this.left = false
         break
       case 'd':
-        this.moveRight = false
+        this.right = false
         break
       case ' ':
         this.jump = false
