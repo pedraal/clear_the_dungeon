@@ -1,6 +1,12 @@
 import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
-import { GameEngine } from '../game_engine'
+import { Engine } from '../engine'
+
+interface Params {
+  engine: Engine,
+  radius: number
+  position: { x: number, y: number, z: number }
+}
 
 export class Sphere {
   static Geometry = new THREE.SphereGeometry(1, 32, 32)
@@ -8,27 +14,31 @@ export class Sphere {
   radius: number
   mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>
   body: CANNON.Body
+  params: Params
+  engine: Engine
 
-  constructor(radius: number, position: { x: number, y: number, z: number }) {
-    this.radius = radius
+  constructor(params: Params) {
+    this.params = params
+    this.engine = this.params.engine
+    this.radius = this.params.radius
     this.mesh = new THREE.Mesh(
       Sphere.Geometry,
       Sphere.Material,
     )
-    this.mesh.scale.set(radius, radius, radius)
+    this.mesh.scale.set(this.radius, this.radius, this.radius)
     this.mesh.castShadow = true
-    this.mesh.position.copy(position as unknown as THREE.Vector3)
+    this.mesh.position.copy(this.params.position as unknown as THREE.Vector3)
 
     this.body = new CANNON.Body({
       mass: 1,
-      shape: new CANNON.Sphere(radius),
-      material: GameEngine.instance.defaultMaterial,
+      shape: new CANNON.Sphere(this.radius),
+      material: this.engine.defaultMaterial,
     })
     this.body.position.copy(this.mesh.position as unknown as CANNON.Vec3)
 
-    if (!GameEngine.instance.physicsDebugger) GameEngine.instance.scene.add(this.mesh)
-    GameEngine.instance.world.addBody(this.body)
-    GameEngine.instance.updatables.push(this)
+    if (!this.engine.physicsDebugger) this.engine.scene.add(this.mesh)
+    this.engine.world.addBody(this.body)
+    this.engine.updatables.push(this)
   }
 
   update() {
@@ -37,8 +47,8 @@ export class Sphere {
 
   // Example of how to remove a prop
   // remove() {
-  //   GameEngine.instance.scene.remove(this.mesh)
-  //   GameEngine.instance.world.removeBody(this.body)
-  //   GameEngine.instance.updatables.splice(GameEngine.instance.updatables.indexOf(this), 1)
+  //   this.engine.scene.remove(this.mesh)
+  //   this.engine.world.removeBody(this.body)
+  //   this.engine.updatables.splice(this.engine.updatables.indexOf(this), 1)
   // }
 }

@@ -6,23 +6,15 @@ import CannonDebugRenderer from './utils/cannon_debug_renderer'
 import { Mapping } from './props/mapping'
 import { Character } from './props/character'
 import { Updatable } from './types'
-import { GameStateMachine } from './game_state_machine'
-import { ThirdPersonControls } from './controls/third_person_controls'
-import { OverlordControls } from './controls/overlord_controls'
-import { GameMap } from './game_map'
-import { Score } from './score'
 
-interface Params {
+export interface Params {
   physicsDebugger?: boolean
   gridHelper?: boolean
   axesHelper?: boolean
   debugUi?: boolean
-  controls: 'third-person' | 'overlord'
 }
 
-export class GameEngine {
-  static instance: GameEngine
-
+export class Engine {
   canvas: HTMLCanvasElement
   viewport: { width: number; height: number }
   renderer: THREE.WebGLRenderer
@@ -37,11 +29,6 @@ export class GameEngine {
   previousElapsedTime: number
   updatables: Updatable[]
   camera: THREE.PerspectiveCamera
-  stateMachine: GameStateMachine
-  controls: ThirdPersonControls | OverlordControls
-  map: GameMap
-  character: Character
-  score: Score
 
   constructor(params: Params) {
     this.params = params
@@ -50,14 +37,6 @@ export class GameEngine {
       throw new Error('No canvas found')
     this.canvas = canvas
 
-    this.stateMachine = new GameStateMachine(this)
-    this.stateMachine.setState('loading')
-
-    window.addEventListener('resize', this.onResize.bind(this))
-    GameEngine.instance = this
-  }
-
-  init() {
     this.computeViewport()
     this.initRenderer()
     this.initClock()
@@ -65,9 +44,8 @@ export class GameEngine {
     this.initDebugUi()
     this.initGlobalLights()
     this.initGlobalHelpers()
-    this.initControls()
-    this.initMap()
-    this.initScore()
+
+    window.addEventListener('resize', this.onResize.bind(this))
   }
 
   loadModels() {
@@ -143,42 +121,6 @@ export class GameEngine {
     document.body.appendChild(this.stats.dom)
   }
 
-  private initControls() {
-    if (this.params.controls === 'third-person')
-      this.controls = new ThirdPersonControls({
-        engine: this,
-        disabledAxes: [
-          'z',
-          'x'
-        ]
-      })
-    else if (this.params.controls === 'overlord')
-      this.controls = new OverlordControls(this)
-  }
-
-  private initMap() {
-    this.map = new GameMap()
-  }
-
-  private initScore() {
-    this.score = new Score()
-  }
-
-  initCharacter() {
-    const controls = (this.controls instanceof ThirdPersonControls) ? this.controls : undefined
-
-    this.character = new Character({
-      name: Character.models[0],
-      position: {
-        x: 0,
-        y: 2,
-        z: 0
-      },
-      orientation: 0,
-      controls
-    })
-  }
-
   private onResize() {
     this.computeViewport()
     this.camera.aspect = this.viewport.width / this.viewport.height
@@ -188,7 +130,7 @@ export class GameEngine {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   }
 
-  tick() {
+  tick(update: (deltaTime: number, elapsedTime: number) => void) {
     const elapsedTime = this.clock.getElapsedTime()
     const deltaTime = elapsedTime - this.previousElapsedTime
     this.previousElapsedTime = elapsedTime
@@ -196,9 +138,10 @@ export class GameEngine {
     this.updatePhysics(deltaTime)
     this.updateRenderer(deltaTime, elapsedTime)
     this.updateDebugUi()
-    this.stateMachine.currentState?.update(deltaTime, elapsedTime)
 
-    window.requestAnimationFrame(() => this.tick())
+    update(deltaTime, elapsedTime)
+
+    window.requestAnimationFrame(() => this.tick(update))
   }
 
   private updatePhysics(deltaTime: number) {

@@ -1,13 +1,13 @@
 import { Coins } from "./coins";
-import { ThirdPersonControls } from "./controls/third_person_controls";
-import { GameEngine } from "./game_engine";
-import { State, StateMachine } from "./utils/state_machine";
+import { ThirdPersonControls } from "../controls/third_person_controls";
+import { State, StateMachine } from "../utils/state_machine";
+import { Game } from ".";
 
 export class GameStateMachine extends StateMachine {
-  engine: GameEngine;
-  constructor(engine: GameEngine) {
+  game: Game;
+  constructor(game: Game) {
     super()
-    this.engine = engine
+    this.game = game
     this.init()
   }
 
@@ -27,13 +27,13 @@ export class LoadingState extends GameStateMachineState {
   name = 'loading'
 
   enter() {
-    this.machine.engine.init()
-    this.machine.engine.loadModels().then(() => {
-      this.machine.engine.map.generateFloor()
-      this.machine.engine.initCharacter()
+    this.machine.game.init()
+    this.machine.game.engine.loadModels().then(() => {
+      this.machine.game.map.generateFloor()
+      this.machine.game.initCharacter()
 
       this.machine.setState('idle')
-      this.machine.engine.tick()
+      this.machine.game.tick()
     })
   }
 
@@ -49,9 +49,9 @@ export class IdleState extends GameStateMachineState {
     document.querySelector<HTMLElement>('#start')!.style.display = 'block'
     document.querySelector<HTMLElement>('#start')!.addEventListener('click', () => this.machine.setState('playing'))
 
-    if (this.machine.engine.controls instanceof ThirdPersonControls) {
-      this.machine.engine.controls.disabledAxes = ['x', 'z', 'y']
-      this.machine.engine.controls.lookBackward = true
+    if (this.machine.game.controls instanceof ThirdPersonControls) {
+      this.machine.game.controls.disabledAxes = ['x', 'z', 'y']
+      this.machine.game.controls.lookBackward = true
     }
   }
 
@@ -66,17 +66,17 @@ export class PlayingState extends GameStateMachineState {
   coins: Coins
 
   enter() {
-    this.machine.engine.score.reset()
-    if (this.machine.engine.controls instanceof ThirdPersonControls) {
-      this.machine.engine.controls.disabledAxes = []
-      this.machine.engine.controls.lookBackward = false
+    this.machine.game.score.reset()
+    if (this.machine.game.controls instanceof ThirdPersonControls) {
+      this.machine.game.controls.disabledAxes = []
+      this.machine.game.controls.lookBackward = false
     }
-    this.machine.engine.character.mesh.position.set(0, 0, 0)
-    this.coins = new Coins(this.machine.engine)
+    this.machine.game.character.mesh.position.set(0, 0, 0)
+    this.coins = new Coins(this.machine.game)
     document.querySelector<HTMLElement>('#playing-ui')!.style.display = 'block'
   }
 
-  update(deltaTime: number, elapsedTime: number) {
+  update(deltaTime: number) {
     this.duration -= deltaTime
     document.querySelector<HTMLElement>('#timer')!.innerHTML = this.duration.toFixed(2)
 
@@ -99,7 +99,7 @@ export class GameOverState extends GameStateMachineState {
     document.querySelector<HTMLElement>('#game-over')!.style.display = 'flex'
   }
 
-  update(deltaTime: number, elapsedTime: number) {
+  update(deltaTime: number) {
     this.duration -= deltaTime
     if (this.duration <= 0) {
       this.machine.setState('idle')

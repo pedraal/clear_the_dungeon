@@ -1,14 +1,14 @@
 import * as THREE from 'three'
-import { GameEngine } from '../game_engine'
+import { Engine } from '../engine'
 
 interface Params {
-  engine: GameEngine,
+  engine: Engine,
   disabledAxes?: ('x' | 'y' | 'z')[]
 }
 
 export class ThirdPersonControls {
   params: Params
-  engine: GameEngine
+  engine: Engine
   disabledAxes: ('x' | 'y' | 'z')[]
   camera: THREE.PerspectiveCamera
   target: THREE.Object3D<THREE.Object3DEventMap>

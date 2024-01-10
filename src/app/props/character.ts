@@ -1,10 +1,11 @@
 import * as THREE from 'three'
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { GameEngine } from '../game_engine'
+import { Engine } from '../engine'
 import { GLTFUtils } from '../utils/gltf_utils'
 import { Controls } from '../types'
 
 interface Params {
+  engine: Engine
   name: string
   position: { x: number, y: number, z: number }
   orientation?: number
@@ -43,6 +44,7 @@ export class Character {
   }
 
   params: Params
+  engine: Engine
   mesh: THREE.Group
   mixer: THREE.AnimationMixer
   model: GLTF
@@ -52,13 +54,14 @@ export class Character {
 
   constructor(params: Params) {
     this.params = params
+    this.engine = this.params.engine
     this.initModel()
     this.initEquipement()
     this.initControls()
     this.initAnimations()
 
-    GameEngine.instance.scene.add(this.mesh)
-    GameEngine.instance.updatables.push(this)
+    this.engine.scene.add(this.mesh)
+    this.engine.updatables.push(this)
   }
 
   private initModel() {
