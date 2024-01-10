@@ -3,7 +3,7 @@ import { Showcase } from '.'
 
 new Showcase({
   engine: {
-    debugUi: import.meta.env.DEV,
+    debugUi: true,
   },
   box: false,
   sphere: true,
