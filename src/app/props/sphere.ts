@@ -1,16 +1,16 @@
-import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
+import * as THREE from 'three'
 import { Engine } from '../engine'
 
 interface Params {
-  engine: Engine,
+  engine: Engine
   radius: number
-  position: { x: number, y: number, z: number }
+  position: { x: number; y: number; z: number }
 }
 
 export class Sphere {
   static Geometry = new THREE.SphereGeometry(1, 32, 32)
-  static Material = new THREE.MeshBasicMaterial({ color: 0xFF0000 })
+  static Material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
   radius: number
   mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>
   body: CANNON.Body
@@ -21,10 +21,7 @@ export class Sphere {
     this.params = params
     this.engine = this.params.engine
     this.radius = this.params.radius
-    this.mesh = new THREE.Mesh(
-      Sphere.Geometry,
-      Sphere.Material,
-    )
+    this.mesh = new THREE.Mesh(Sphere.Geometry, Sphere.Material)
     this.mesh.scale.set(this.radius, this.radius, this.radius)
     this.mesh.castShadow = true
     this.mesh.position.copy(this.params.position as unknown as THREE.Vector3)

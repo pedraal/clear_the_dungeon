@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Engine } from '../engine'
 
 interface Params {
-  engine: Engine,
+  engine: Engine
   disabledAxes?: ('x' | 'y' | 'z')[]
 }
 

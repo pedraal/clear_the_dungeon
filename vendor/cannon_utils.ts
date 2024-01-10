@@ -101,9 +101,7 @@ class CannonUtils {
       faces.splice(idx, 1)
     }
 
-    const cannonFaces: number[][] = faces.map(function (f) {
-      return [f.a, f.b, f.c]
-    })
+    const cannonFaces: number[][] = faces.map((f) => [f.a, f.b, f.c])
 
     return new CANNON.ConvexPolyhedron({
       vertices: points,
@@ -115,11 +113,11 @@ class CannonUtils {
     body: CANNON.Body,
     centreOfMass: CANNON.Vec3
   ): void {
-    body.shapeOffsets.forEach(function (offset: CANNON.Vec3) {
+    body.shapeOffsets.forEach((offset: CANNON.Vec3) => {
       centreOfMass.vadd(offset, centreOfMass)
     })
     centreOfMass.scale(1 / body.shapes.length, centreOfMass)
-    body.shapeOffsets.forEach(function (offset: CANNON.Vec3) {
+    body.shapeOffsets.forEach((offset: CANNON.Vec3) => {
       offset.vsub(centreOfMass, offset)
     })
     const worldCenterOfMass = new CANNON.Vec3()

@@ -1,9 +1,9 @@
-import { Engine, Params as EngineParams } from '../engine'
-import { Character } from '../props/character'
 import { OverlordControls } from '../controls/overlord_controls'
+import { Engine, Params as EngineParams } from '../engine'
+import { Box } from '../props/box'
+import { Character } from '../props/character'
 import { Mapping, Mappings } from '../props/mapping'
 import { Sphere } from '../props/sphere'
-import { Box } from '../props/box'
 import { ShowcaseStateMachine } from './showcase_state_machine'
 
 interface Params {
@@ -44,16 +44,13 @@ export class Showcase {
     for (const name of [...Object.values(Mappings)]) {
       new Mapping({ engine: this.engine, name, position: { x, y: 0, z }, mass: 0, orientation: 0 })
 
-      if (this.params.sphere)
-        new Sphere({engine: this.engine, radius: 0.5, position: { x, y: 8, z }})
-      else if (this.params.box)
-        new Box({engine: this.engine, side: 0.5, position: { x, y: 8, z }})
+      if (this.params.sphere) new Sphere({ engine: this.engine, radius: 0.5, position: { x, y: 8, z } })
+      else if (this.params.box) new Box({ engine: this.engine, side: 0.5, position: { x, y: 8, z } })
 
       if (x === lastCellX) {
         x = firstCellX
         z += cellSize
-      }
-      else {
+      } else {
         x += cellSize
       }
     }
@@ -63,8 +60,6 @@ export class Showcase {
     this.engine.tick((dt, et) => {})
   }
 }
-
-
 
 //   static mappingShowcase(index: number, options: { sphere?: boolean, box?: true, shapeAlgorithm?: Mapping['shapeAlgorithm'] }) {
 //   new Mapping(Mapping.models[index], { position: { x: 0, y: 2, z: 0 }, mass: 0, orientation: 0, shapeAlgorithm: options.shapeAlgorithm })

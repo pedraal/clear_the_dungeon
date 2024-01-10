@@ -1,16 +1,16 @@
-import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
+import * as THREE from 'three'
 import { Engine } from '../engine'
 
 interface Params {
-  engine: Engine,
+  engine: Engine
   side: number
-  position: { x: number, y: number, z: number }
+  position: { x: number; y: number; z: number }
 }
 
 export class Box {
   static Geometry = new THREE.BoxGeometry(1, 1, 1)
-  static Material = new THREE.MeshBasicMaterial({ color: 0x0000FF })
+  static Material = new THREE.MeshBasicMaterial({ color: 0x0000ff })
   mesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>
   body: CANNON.Body
   params: Params
@@ -19,10 +19,7 @@ export class Box {
   constructor(params: Params) {
     this.params = params
     this.engine = this.params.engine
-    this.mesh = new THREE.Mesh(
-      Box.Geometry,
-      Box.Material,
-    )
+    this.mesh = new THREE.Mesh(Box.Geometry, Box.Material)
     this.mesh.name = 'Box'
     this.mesh.scale.set(this.params.side, this.params.side, this.params.side)
     this.mesh.castShadow = true

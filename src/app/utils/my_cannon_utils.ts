@@ -1,8 +1,9 @@
-import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { Geometry } from './deprecated_geometry'
+import * as THREE from 'three'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { Geometry } from '../../../vendor/deprecated_geometry'
 
+// biome-ignore lint/complexity/noStaticOnlyClass: Because why not.
 export class MyCannonUtils {
   public static CreateConvexPolyhedron(geometry: THREE.BufferGeometry): CANNON.ConvexPolyhedron {
     const cleanedGeometry = BufferGeometryUtils.mergeVertices(geometry)
@@ -15,17 +16,12 @@ export class MyCannonUtils {
       )
     }
 
-    if (!cleanedGeometry.index)
-      throw new Error('Mesh does not have an index')
+    if (!cleanedGeometry.index) throw new Error('Mesh does not have an index')
 
     const indexes = cleanedGeometry.index.array
     const faces: number[][] = []
     for (let i = 0; i < indexes.length; i += 3) {
-      faces.push([
-        indexes[i],
-        indexes[i + 1],
-        indexes[i + 2],
-      ])
+      faces.push([indexes[i], indexes[i + 1], indexes[i + 2]])
     }
 
     const geometryNormal = cleanedGeometry.attributes.position

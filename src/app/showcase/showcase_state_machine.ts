@@ -1,8 +1,8 @@
-import { State, StateMachine } from "../utils/state_machine";
-import { Showcase } from ".";
+import { Showcase } from '.'
+import { State, StateMachine } from '../utils/state_machine'
 
 export class ShowcaseStateMachine extends StateMachine {
-  showcase: Showcase;
+  showcase: Showcase
   constructor(showcase: Showcase) {
     super()
     this.showcase = showcase
@@ -16,7 +16,7 @@ export class ShowcaseStateMachine extends StateMachine {
 }
 
 class ShowcaseStateMachineState extends State {
-  machine: ShowcaseStateMachine;
+  machine: ShowcaseStateMachine
 }
 
 export class LoadingState extends ShowcaseStateMachineState {
@@ -30,7 +30,8 @@ export class LoadingState extends ShowcaseStateMachineState {
   }
 
   exit() {
-    document.querySelector<HTMLElement>('#loading')!.style.display = 'none'
+    const loadingEl = document.querySelector<HTMLElement>('#loading')
+    if (loadingEl) loadingEl.style.display = 'none'
     this.machine.showcase.tick()
   }
 }

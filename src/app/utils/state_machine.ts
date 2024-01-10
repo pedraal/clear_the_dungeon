@@ -1,15 +1,15 @@
 type StateClass = typeof State
 
 export class StateMachine {
-  states: Record<string, StateClass>;
-  currentState: State | undefined;
+  states: Record<string, StateClass>
+  currentState: State | undefined
 
   constructor() {
     this.states = {}
     this.currentState = undefined
   }
 
-  init() { }
+  init() {}
 
   addState(name: string, state: StateClass) {
     this.states[name] = state
@@ -30,7 +30,7 @@ export class StateMachine {
 }
 
 export class State {
-  machine: StateMachine;
+  machine: StateMachine
   name: string
 
   constructor(machine: StateMachine) {
@@ -41,7 +41,7 @@ export class State {
     }
   }
 
-  enter(prevState?: State) { }
-  update(deltaTime: number, elapsedTime: number) { }
-  exit() { }
+  enter(prevState?: State) {}
+  update(deltaTime: number, elapsedTime: number) {}
+  exit() {}
 }

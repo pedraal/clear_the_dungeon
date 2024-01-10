@@ -1,44 +1,39 @@
 import * as THREE from 'three'
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { Engine } from '../engine'
-import { GLTFUtils } from '../utils/gltf_utils'
 import { Controls } from '../types'
+import { GLTFUtils } from '../utils/gltf_utils'
 
 interface Params {
   engine: Engine
   name: string
-  position: { x: number, y: number, z: number }
+  position: { x: number; y: number; z: number }
   orientation?: number
   controls?: Controls
 }
 
-const randomSkin = [
-  'Barbarian',
-  'Knight',
-  'Mage',
-  'Rogue',
-  'Rogue_Hooded',
-][Math.floor(Math.random() * 5)]
+const randomSkin = ['Barbarian', 'Knight', 'Mage', 'Rogue', 'Rogue_Hooded'][Math.floor(Math.random() * 5)]
 
 export class Character {
   static gltfs: Record<string, GLTF> = {}
   static loader = new GLTFLoader()
   static async load() {
-    const loadPromise = (name: string): Promise<void> => new Promise((resolve) => {
-      Character.loader.load(
-        `/gltf/characters/${name}.glb`,
-        (model) => {
-          Character.gltfs[name] = model
-          resolve()
-        },
-        (xhr) => {
-          // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-        },
-        (error) => {
-          console.error('GLTFLoader : ', error)
-        }
-      )
-    })
+    const loadPromise = (name: string): Promise<void> =>
+      new Promise((resolve) => {
+        Character.loader.load(
+          `/gltf/characters/${name}.glb`,
+          (model) => {
+            Character.gltfs[name] = model
+            resolve()
+          },
+          (xhr) => {
+            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+          },
+          (error) => {
+            console.error('GLTFLoader : ', error)
+          },
+        )
+      })
 
     await Promise.all(Character.models.map((name) => loadPromise(name)))
   }
@@ -93,8 +88,7 @@ export class Character {
     this.mesh.traverse((node) => {
       if (node instanceof THREE.Bone && node.name === 'handslotl') {
         left = node
-      }
-      else if (node instanceof THREE.Bone && node.name === 'handslotr') {
+      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
         right = node
       }
     })
@@ -122,17 +116,11 @@ export class Character {
     this.controls.updateCamera()
 
     let movementAnimation: THREE.AnimationClip
-    if (movementVector.z === -1)
-      movementAnimation = this.getAnimation('Walking_Backwards')
-    else if (movementVector.x === -1)
-      movementAnimation = this.getAnimation('Running_Strafe_Right')
-    else if (movementVector.x === 1)
-      movementAnimation = this.getAnimation('Running_Strafe_Left')
-    else if (movementVector.z === 1)
-      movementAnimation = this.getAnimation('Running_A')
-    else
-      movementAnimation = this.getAnimation('Idle')
-
+    if (movementVector.z === -1) movementAnimation = this.getAnimation('Walking_Backwards')
+    else if (movementVector.x === -1) movementAnimation = this.getAnimation('Running_Strafe_Right')
+    else if (movementVector.x === 1) movementAnimation = this.getAnimation('Running_Strafe_Left')
+    else if (movementVector.z === 1) movementAnimation = this.getAnimation('Running_A')
+    else movementAnimation = this.getAnimation('Idle')
 
     if (this.movementAnimation !== movementAnimation) {
       this.mixer.clipAction(movementAnimation).play()
@@ -143,10 +131,8 @@ export class Character {
   }
 
   private getAnimation(name: string) {
-    return this.model.animations.find(a => a.name === name) as THREE.AnimationClip
+    return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
   }
 
-  static models = [
-    randomSkin
-  ]
+  static models = [randomSkin]
 }

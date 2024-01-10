@@ -1,10 +1,10 @@
-import { Coins } from "./coins";
-import { ThirdPersonControls } from "../controls/third_person_controls";
-import { State, StateMachine } from "../utils/state_machine";
-import { Game } from ".";
+import { Game } from '.'
+import { ThirdPersonControls } from '../controls/third_person_controls'
+import { State, StateMachine } from '../utils/state_machine'
+import { Coins } from './coins'
 
 export class GameStateMachine extends StateMachine {
-  game: Game;
+  game: Game
   constructor(game: Game) {
     super()
     this.game = game
@@ -20,7 +20,7 @@ export class GameStateMachine extends StateMachine {
 }
 
 class GameStateMachineState extends State {
-  machine: GameStateMachine;
+  machine: GameStateMachine
 }
 
 export class LoadingState extends GameStateMachineState {
@@ -38,7 +38,8 @@ export class LoadingState extends GameStateMachineState {
   }
 
   exit() {
-    document.querySelector<HTMLElement>('#loading')!.style.display = 'none'
+    const loadingEl = document.querySelector<HTMLElement>('#loading')
+    if (loadingEl) loadingEl.style.display = 'none'
   }
 }
 
@@ -46,8 +47,10 @@ export class IdleState extends GameStateMachineState {
   name = 'idle'
 
   enter() {
-    document.querySelector<HTMLElement>('#start')!.style.display = 'block'
-    document.querySelector<HTMLElement>('#start')!.addEventListener('click', () => this.machine.setState('playing'))
+    if (this.startEl) {
+      this.startEl.style.display = 'block'
+      this.startEl.addEventListener('click', () => this.machine.setState('playing'))
+    }
 
     if (this.machine.game.controls instanceof ThirdPersonControls) {
       this.machine.game.controls.disabledAxes = ['x', 'z', 'y']
@@ -56,7 +59,14 @@ export class IdleState extends GameStateMachineState {
   }
 
   exit() {
-    document.querySelector<HTMLElement>('#start')!.style.display = 'none'
+    if (this.startEl) {
+      this.startEl.removeEventListener('click', () => this.machine.setState('playing'))
+      this.startEl.style.display = 'none'
+    }
+  }
+
+  get startEl() {
+    return document.querySelector<HTMLElement>('#start')
   }
 }
 
@@ -73,12 +83,12 @@ export class PlayingState extends GameStateMachineState {
     }
     this.machine.game.character.mesh.position.set(0, 0, 0)
     this.coins = new Coins(this.machine.game)
-    document.querySelector<HTMLElement>('#playing-ui')!.style.display = 'block'
+    if (this.playingUiEl) this.playingUiEl.style.display = 'block'
   }
 
   update(deltaTime: number) {
     this.duration -= deltaTime
-    document.querySelector<HTMLElement>('#timer')!.innerHTML = this.duration.toFixed(2)
+    if (this.timerEl) this.timerEl.innerHTML = this.duration.toFixed(2)
 
     if (this.duration <= 0) {
       this.machine.setState('game-over')
@@ -87,7 +97,15 @@ export class PlayingState extends GameStateMachineState {
 
   exit() {
     this.coins.remove()
-    document.querySelector<HTMLElement>('#playing-ui')!.style.display = 'none'
+    if (this.playingUiEl) this.playingUiEl.style.display = 'none'
+  }
+
+  get playingUiEl() {
+    return document.querySelector<HTMLElement>('#playing-ui')
+  }
+
+  get timerEl() {
+    return document.querySelector<HTMLElement>('#timer')
   }
 }
 
@@ -96,7 +114,7 @@ export class GameOverState extends GameStateMachineState {
   duration = 5
 
   enter() {
-    document.querySelector<HTMLElement>('#game-over')!.style.display = 'flex'
+    if (this.gameOverEl) this.gameOverEl.style.display = 'flex'
   }
 
   update(deltaTime: number) {
@@ -107,6 +125,10 @@ export class GameOverState extends GameStateMachineState {
   }
 
   exit() {
-    document.querySelector<HTMLElement>('#game-over')!.style.display = 'none'
+    if (this.gameOverEl) this.gameOverEl.style.display = 'none'
+  }
+
+  get gameOverEl() {
+    return document.querySelector<HTMLElement>('#game-over')
   }
 }

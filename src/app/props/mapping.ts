@@ -1,9 +1,9 @@
 import * as CANNON from 'cannon-es'
-import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import CannonUtils from '../utils/cannon_utils'
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import CannonUtils from '../../../vendor/cannon_utils'
 import { Engine } from '../engine'
-import { MyCannonUtils } from '../utils/my_cannon_utils'
 import { GLTFUtils } from '../utils/gltf_utils'
+import { MyCannonUtils } from '../utils/my_cannon_utils'
 
 // Assets source : https://kaylousberg.com/game-assets/prototype-bits
 export enum Mappings {
@@ -77,9 +77,9 @@ export enum Mappings {
 }
 
 interface Params {
-  engine: Engine,
-  name: Mappings,
-  position: { x: number, y: number, z: number }
+  engine: Engine
+  name: Mappings
+  position: { x: number; y: number; z: number }
   orientation?: number
   mass?: number
   shapeAlgorithm?: 'convex' | 'convex-deprecated' | 'sbcode-convex'
@@ -89,21 +89,22 @@ export class Mapping {
   static gltfs: Record<string, GLTF> = {}
   static loader = new GLTFLoader()
   static async load() {
-    const loadPromise = (name: string): Promise<void> => new Promise((resolve) => {
-      Mapping.loader.load(
-        `/gltf/mappings/${name}.gltf`,
-        (model) => {
-          Mapping.gltfs[name] = model
-          resolve()
-        },
-        (xhr) => {
-          // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-        },
-        (error) => {
-          console.error('GLTFLoader : ', error)
-        }
-      )
-    })
+    const loadPromise = (name: string): Promise<void> =>
+      new Promise((resolve) => {
+        Mapping.loader.load(
+          `/gltf/mappings/${name}.gltf`,
+          (model) => {
+            Mapping.gltfs[name] = model
+            resolve()
+          },
+          (xhr) => {
+            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+          },
+          (error) => {
+            console.error('GLTFLoader : ', error)
+          },
+        )
+      })
 
     await Promise.all(Object.keys(Mappings).map((name) => loadPromise(name)))
   }
@@ -143,18 +144,16 @@ export class Mapping {
   }
 
   get cannonShape() {
-    if (this.shapeAlgorithm === 'convex')
-      return MyCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
+    if (this.shapeAlgorithm === 'convex') return MyCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
     else if (this.shapeAlgorithm === 'convex-deprecated')
       return MyCannonUtils.CreateConvexPolyhedronFromDeprecatedGeometry(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sbcode-convex')
-      return CannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
+    else if (this.shapeAlgorithm === 'sbcode-convex') return CannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
+    else return MyCannonUtils.CreateConvexPolyhedronFromDeprecatedGeometry(this.mesh.geometry)
   }
 
   remove() {
-    this.engine.updatables = this.engine.updatables.filter(u => u !== this)
+    this.engine.updatables = this.engine.updatables.filter((u) => u !== this)
     this.engine.world.removeBody(this.body)
     this.engine.scene.remove(this.mesh)
   }
-
 }

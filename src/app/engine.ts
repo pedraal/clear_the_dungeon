@@ -1,10 +1,10 @@
-import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
 import GUI from 'lil-gui'
+import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import CannonDebugRenderer from './utils/cannon_debug_renderer'
-import { Mapping } from './props/mapping'
+import CannonDebugRenderer from '../../vendor/cannon_debug_renderer'
 import { Character } from './props/character'
+import { Mapping } from './props/mapping'
 import { Updatable } from './types'
 
 export interface Params {
@@ -33,8 +33,7 @@ export class Engine {
   constructor(params: Params) {
     this.params = params
     const canvas = document.querySelector('canvas')
-    if (!canvas)
-      throw new Error('No canvas found')
+    if (!canvas) throw new Error('No canvas found')
     this.canvas = canvas
 
     this.computeViewport()
@@ -49,10 +48,7 @@ export class Engine {
   }
 
   loadModels() {
-    return Promise.all([
-      Character.load(),
-      Mapping.load(),
-    ])
+    return Promise.all([Character.load(), Mapping.load()])
   }
 
   private computeViewport() {
@@ -63,7 +59,7 @@ export class Engine {
   }
 
   private initRenderer() {
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas })
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true })
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(90, this.viewport.width / this.viewport.height, 0.1, 100)
     this.updatables = []
@@ -85,20 +81,18 @@ export class Engine {
     this.world.allowSleep = true
 
     this.defaultMaterial = new CANNON.Material('default')
-    const defaultContactMaterial = new CANNON.ContactMaterial(
-      this.defaultMaterial,
-      this.defaultMaterial,
-      { friction: 0.1, restitution: 0 },
-    )
+    const defaultContactMaterial = new CANNON.ContactMaterial(this.defaultMaterial, this.defaultMaterial, {
+      friction: 0.1,
+      restitution: 0,
+    })
     this.world.addContactMaterial(defaultContactMaterial)
 
-    if (this.params.physicsDebugger)
-      this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
+    if (this.params.physicsDebugger) this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
   }
 
   private initGlobalLights() {
-    const ambiantLight = new THREE.AmbientLight(0xFFFFFF, 1.5)
-    const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 3)
+    const ambiantLight = new THREE.AmbientLight(0xffffff, 1.5)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
     this.scene.add(ambiantLight, directionalLight)
   }
 
@@ -150,9 +144,7 @@ export class Engine {
   }
 
   private updateRenderer(deltaTime: number, elapsedTime: number) {
-    this.updatables.forEach((object) => {
-      object.update(deltaTime, elapsedTime)
-    })
+    for (const object of this.updatables) object.update(deltaTime, elapsedTime)
     this.renderer.render(this.scene, this.camera)
   }
 

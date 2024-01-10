@@ -26,7 +26,7 @@ export class Score {
   }
 
   renderScore() {
-    document.querySelectorAll('.score').forEach(el => el.innerHTML = this.value.toString())
-    document.querySelectorAll('.personnal-best').forEach(el => el.innerHTML = this.personnalBest.toString())
+    for (const el of document.querySelectorAll('.score')) el.innerHTML = this.value.toString()
+    for (const el of document.querySelectorAll('.personnal-best')) el.innerHTML = this.personnalBest.toString()
   }
 }
