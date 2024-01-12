@@ -87,18 +87,22 @@ export class ThirdPersonControls {
   onKeyDown = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'z':
+      case 'ArrowUp':
         this.backward = false
         this.forward = true
         break
       case 's':
+      case 'ArrowDown':
         this.forward = false
         this.backward = true
         break
       case 'q':
+      case 'ArrowLeft':
         this.right = false
         this.left = true
         break
       case 'd':
+      case 'ArrowRight':
         this.left = false
         this.right = true
         break
@@ -111,15 +115,19 @@ export class ThirdPersonControls {
   onKeyUp = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'z':
+      case 'ArrowUp':
         this.forward = false
         break
       case 's':
+      case 'ArrowDown':
         this.backward = false
         break
       case 'q':
+      case 'ArrowLeft':
         this.left = false
         break
       case 'd':
+      case 'ArrowRight':
         this.right = false
         break
       case ' ':
