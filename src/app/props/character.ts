@@ -14,8 +14,8 @@ interface Params {
 }
 
 export enum Characters {
-  Barbarian = 'Barbarian',
   Knight = 'Knight',
+  // Barbarian = 'Barbarian',
   // Mage = 'Mage',
   // Rogue = 'Rogue',
   // Rogue_Hooded = 'Rogue_Hooded',
