@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Game } from '.'
+import { Game } from '../game'
 import { Mapping, Mappings } from '../props/mapping'
 
 export class Coins {
