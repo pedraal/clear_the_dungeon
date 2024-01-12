@@ -123,8 +123,7 @@ class IdleState extends GameState {
     }
 
     if (this.machine.game.controls instanceof ThirdPersonControls) {
-      this.machine.game.controls.disabledAxes = ['x', 'z', 'y']
-      this.machine.game.controls.lookBackward = true
+      this.machine.game.controls.disable()
     }
   }
 
@@ -148,8 +147,7 @@ class PlayingState extends GameState {
   enter() {
     this.machine.game.score.reset()
     if (this.machine.game.controls instanceof ThirdPersonControls) {
-      this.machine.game.controls.disabledAxes = []
-      this.machine.game.controls.lookBackward = false
+      this.machine.game.controls.enable()
     }
     this.machine.game.character.mesh.position.set(0, 0, 0)
     this.coins = new Coins(this.machine.game)

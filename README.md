@@ -12,11 +12,11 @@ This is a work in progress, the following list is not exhaustive and is subject 
 ### Alpha
 - [x] `Loading` screen
 - [x] `Main Menu` screen
-- [ ] `Game Over` screen
+- [ ] `Game Over`"" screen
 - [x] Coins gathering
 - [x] Basic movements (up, down, left, right, jump)
 - [x] Keyboard controls
-- [ ] Camera rotation
+- [x] Camera rotation
 - [ ] First map
 - [ ] Time score
 
@@ -31,6 +31,7 @@ This is a work in progress, the following list is not exhaustive and is subject 
   - [ ] Camera fov
   - [ ] antialiasing
   - [ ] Reset progressions
+  - [ ] Camera movement sensitivity
 - [ ] Loading manager with progress bar on the `Loading` screen
 - [ ] Gathering particles effects
 - [ ] Enemies + Attacks (ennemies and player)

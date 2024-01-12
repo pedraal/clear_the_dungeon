@@ -5,6 +5,7 @@ export interface Controls {
   right: boolean
   jump: boolean
   movementVector: THREE.Vector3
+  quaternion: THREE.Quaternion
   assignTarget(target: THREE.Object3D): void
   updateCamera(): void
 }

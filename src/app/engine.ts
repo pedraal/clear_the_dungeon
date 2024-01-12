@@ -32,6 +32,7 @@ export class Engine {
 
   constructor(params: Params) {
     this.params = params
+
     const canvas = document.querySelector('canvas')
     if (!canvas) throw new Error('No canvas found')
     this.canvas = canvas

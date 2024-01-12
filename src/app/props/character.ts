@@ -117,7 +117,10 @@ export class Character {
   private handleMovement(dt: number) {
     if (!this.controls) return
 
+    this.mesh.quaternion.slerp(this.controls.quaternion, 0.05)
+
     const movementVector = this.controls.movementVector.clone()
+    movementVector.applyQuaternion(this.mesh.quaternion)
     const velocity = 6 * dt
     movementVector.y = 0 // vertical movement is handled by the jump animation
     this.mesh.position.add(movementVector.multiplyScalar(velocity))
