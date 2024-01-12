@@ -35,16 +35,13 @@ export class Coins {
         this.removeCoin(coin)
       }
 
-      if (!this.target) return
-      const targetPosition = this.target.position.clone()
-      targetPosition.y = 1
-      if (coinPosition.distanceTo(targetPosition) < 1) {
-        this.hit(coin)
+      if (this.game.character.objectIsWithinHitbox(coinPosition)) {
+        this.gather(coin)
       }
     }
   }
 
-  private hit(coin: Mapping) {
+  private gather(coin: Mapping) {
     switch (coin.mesh.name) {
       case 'Coin_A':
         this.game.score.incrementBy(3)
@@ -74,11 +71,6 @@ export class Coins {
     this.coins = this.coins.filter((m) => m !== coin)
     coin.remove()
   }
-
-  private get target() {
-    return this.game.character.mesh
-  }
-
   private get spawnZ() {
     return this.game.map.zBoundings[1] * this.game.map.cellSide
   }

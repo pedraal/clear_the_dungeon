@@ -127,6 +127,20 @@ export class Character {
   getAnimation(name: string) {
     return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
   }
+  get hitbox() {
+    return new THREE.Box3().setFromObject(this.mesh)
+  }
+
+  objectIsWithinHitbox(object: THREE.Vector3) {
+    return (
+      object.x >= this.hitbox.min.x &&
+      object.x <= this.hitbox.max.x &&
+      object.y >= this.hitbox.min.y &&
+      object.y <= this.hitbox.max.y &&
+      object.z >= this.hitbox.min.z &&
+      object.z <= this.hitbox.max.z
+    )
+  }
 }
 
 class CharacterStateMachine extends StateMachine {
