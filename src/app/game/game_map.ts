@@ -17,7 +17,7 @@ export class GameMap {
         new Mapping({
           engine: this.engine,
           name: Mappings.Floor_Dirt,
-          position: { x: i * this.cellSide, y: -1, z: j * this.cellSide },
+          position: { x: i * this.cellSide, y: -0.8, z: j * this.cellSide },
         })
       }
     }
