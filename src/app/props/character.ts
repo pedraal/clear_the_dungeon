@@ -119,7 +119,8 @@ export class Character {
 
     const movementVector = this.controls.movementVector.clone()
     const velocity = 6 * dt
-    this.mesh.position.add(movementVector.clone().multiplyScalar(velocity))
+    movementVector.y = 0 // vertical movement is handled by the jump animation
+    this.mesh.position.add(movementVector.multiplyScalar(velocity))
 
     this.controls.updateCamera()
   }
@@ -127,6 +128,7 @@ export class Character {
   getAnimation(name: string) {
     return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
   }
+
   get hitbox() {
     return new THREE.Box3().setFromObject(this.mesh)
   }
@@ -157,6 +159,9 @@ class CharacterStateMachine extends StateMachine {
     this.addState('strafing_left', StrafingLeftState)
     this.addState('strafing_right', StrafingRightState)
     this.addState('walking_backward', WalkingBackwardState)
+    this.addState('starting_jump', StartingJumpState)
+    this.addState('jumping', JumpingState)
+    this.addState('landing_jump', LandingJumpState)
   }
 
   get direction() {
@@ -165,20 +170,17 @@ class CharacterStateMachine extends StateMachine {
       backward: false,
       left: false,
       right: false,
+      jump: false,
     }
 
     if (!this.character.controls) return direction
 
     const movementVector = this.character.controls.movementVector
-    if (movementVector.z === -1) {
-      direction.backward = true
-    } else if (movementVector.x === -1) {
-      direction.right = true
-    } else if (movementVector.x === 1) {
-      direction.left = true
-    } else if (movementVector.z === 1) {
-      direction.forward = true
-    }
+    if (movementVector.y > 1) direction.jump = true
+    else if (movementVector.z === -1) direction.backward = true
+    else if (movementVector.x === -1) direction.right = true
+    else if (movementVector.x === 1) direction.left = true
+    else if (movementVector.z === 1) direction.forward = true
 
     return direction
   }
@@ -187,6 +189,9 @@ class CharacterStateMachine extends StateMachine {
 class CharacterState extends State {
   machine: CharacterStateMachine
   animation: string
+  transitionTime = 0.2
+  enterTime = 0.0
+  loop: THREE.AnimationActionLoopStyles = THREE.LoopRepeat
 
   get action() {
     return this.machine.character.mixer.clipAction(this.machine.character.getAnimation(this.animation))
@@ -194,11 +199,12 @@ class CharacterState extends State {
 
   enter(prevState?: CharacterState) {
     if (prevState) {
-      this.action.time = 0.0
+      this.action.time = this.enterTime
+      this.action.loop = this.loop
       this.action.enabled = true
       this.action.setEffectiveTimeScale(1.0)
       this.action.setEffectiveWeight(1.0)
-      this.action.crossFadeFrom(prevState.action, 0.2, true)
+      this.action.crossFadeFrom(prevState.action, this.transitionTime, true)
       this.action.play()
     } else {
       this.action.play()
@@ -211,7 +217,8 @@ class IdleState extends CharacterState {
   animation = 'Idle'
 
   update() {
-    if (this.machine.direction.forward) this.machine.setState('running')
+    if (this.machine.direction.jump) this.machine.setState('starting_jump')
+    else if (this.machine.direction.forward) this.machine.setState('running')
     else if (this.machine.direction.backward) this.machine.setState('walking_backward')
     else if (this.machine.direction.left) this.machine.setState('strafing_left')
     else if (this.machine.direction.right) this.machine.setState('strafing_right')
@@ -223,7 +230,8 @@ class RunningState extends CharacterState {
   animation = 'Running_A'
 
   update() {
-    if (!this.machine.direction.forward) this.machine.setState('idle')
+    if (this.machine.direction.jump) this.machine.setState('starting_jump')
+    else if (!this.machine.direction.forward) this.machine.setState('idle')
     else if (this.machine.direction.backward) this.machine.setState('walking_backward')
     else if (this.machine.direction.left) this.machine.setState('strafing_left')
     else if (this.machine.direction.right) this.machine.setState('strafing_right')
@@ -235,7 +243,8 @@ class StrafingLeftState extends CharacterState {
   animation = 'Running_Strafe_Left'
 
   update() {
-    if (!this.machine.direction.left) this.machine.setState('idle')
+    if (this.machine.direction.jump) this.machine.setState('starting_jump')
+    else if (!this.machine.direction.left) this.machine.setState('idle')
     else if (this.machine.direction.backward) this.machine.setState('walking_backward')
     else if (this.machine.direction.forward) this.machine.setState('running')
     else if (this.machine.direction.right) this.machine.setState('strafing_right')
@@ -246,7 +255,8 @@ class StrafingRightState extends CharacterState {
   animation = 'Running_Strafe_Right'
 
   update() {
-    if (!this.machine.direction.right) this.machine.setState('idle')
+    if (this.machine.direction.jump) this.machine.setState('starting_jump')
+    else if (!this.machine.direction.right) this.machine.setState('idle')
     else if (this.machine.direction.backward) this.machine.setState('walking_backward')
     else if (this.machine.direction.forward) this.machine.setState('running')
     else if (this.machine.direction.left) this.machine.setState('strafing_left')
@@ -258,9 +268,60 @@ class WalkingBackwardState extends CharacterState {
   animation = 'Walking_Backwards'
 
   update() {
-    if (!this.machine.direction.backward) this.machine.setState('idle')
+    if (this.machine.direction.jump) this.machine.setState('starting_jump')
+    else if (!this.machine.direction.backward) this.machine.setState('idle')
     else if (this.machine.direction.forward) this.machine.setState('running')
     else if (this.machine.direction.left) this.machine.setState('strafing_left')
     else if (this.machine.direction.right) this.machine.setState('strafing_right')
+  }
+}
+
+class StartingJumpState extends CharacterState {
+  name = 'starting_jump'
+  animation = 'Jump_Start'
+  loop = THREE.LoopOnce
+
+  transitionTime = 0.1
+  elapsedTime = 0
+  duration = 0.2
+
+  update(dt: number) {
+    this.elapsedTime += dt
+    if (this.elapsedTime > this.duration) this.machine.setState('jumping')
+  }
+}
+
+class JumpingState extends CharacterState {
+  name = 'jumping'
+  animation = 'Jump_Idle'
+
+  elapsedTime = 0
+  duration = 0.7
+  transitionTime = 0.1
+  halfDuration = this.duration / 2
+
+  update(dt: number) {
+    this.elapsedTime += dt
+    if (this.elapsedTime > this.duration) this.machine.setState('landing_jump')
+    else {
+      const t = this.elapsedTime / this.halfDuration
+      const value = Math.sin((t * Math.PI) / 2)
+      this.machine.character.mesh.position.y = value * 2.2
+    }
+  }
+}
+
+class LandingJumpState extends CharacterState {
+  name = 'landing_jump'
+  animation = 'Jump_Land'
+
+  enterTime = 0.2
+  elapsedTime = 0
+  transitionTime = 0.1
+  duration = 0.1
+
+  update(dt: number) {
+    this.elapsedTime += dt
+    if (this.elapsedTime > this.duration) this.machine.setState('idle')
   }
 }

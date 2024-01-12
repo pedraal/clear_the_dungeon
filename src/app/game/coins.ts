@@ -62,7 +62,7 @@ export class Coins {
       new Mapping({
         engine: this.game.engine,
         name: Coins.MappingNames[randomCoin],
-        position: { x: this.spawnX(), y: 1, z: this.spawnZ },
+        position: { x: this.spawnX(), y: this.spawnY(), z: this.spawnZ },
       }),
     )
   }
@@ -82,6 +82,10 @@ export class Coins {
   private spawnX() {
     const range = 15
     return Math.floor(Math.random() * range) - range / 2
+  }
+
+  private spawnY() {
+    return Math.floor(Math.random() * 4) + 1
   }
 
   remove() {
