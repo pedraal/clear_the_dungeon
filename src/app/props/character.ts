@@ -13,7 +13,13 @@ interface Params {
   controls?: Controls
 }
 
-const randomSkin = ['Barbarian', 'Knight', 'Mage', 'Rogue', 'Rogue_Hooded'][Math.floor(Math.random() * 5)]
+export enum Characters {
+  Barbarian = 'Barbarian',
+  Knight = 'Knight',
+  // Mage = 'Mage',
+  // Rogue = 'Rogue',
+  // Rogue_Hooded = 'Rogue_Hooded',
+}
 
 export class Character {
   static gltfs: Record<string, GLTF> = {}
@@ -36,7 +42,7 @@ export class Character {
         )
       })
 
-    await Promise.all(Character.models.map((name) => loadPromise(name)))
+    await Promise.all(Object.values(Characters).map((name) => loadPromise(name)))
   }
 
   params: Params
@@ -121,8 +127,6 @@ export class Character {
   getAnimation(name: string) {
     return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
   }
-
-  static models = [randomSkin]
 }
 
 class CharacterStateMachine extends StateMachine {

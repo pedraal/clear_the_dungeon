@@ -4,7 +4,7 @@ import { Engine, Params as EngineParams } from './engine'
 import { Coins } from './game/coins'
 import { GameMap } from './game/game_map'
 import { Score } from './game/score'
-import { Character } from './props/character'
+import { Character, Characters } from './props/character'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
@@ -55,7 +55,7 @@ export class Game {
 
     this.character = new Character({
       engine: this.engine,
-      name: Character.models[0],
+      name: Object.values(Characters)[Math.floor(Math.random() * Object.values(Characters).length)],
       position: {
         x: 0,
         y: 2,
