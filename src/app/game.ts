@@ -1,4 +1,4 @@
-import { OverlordControls } from './controls/overlord_controls'
+import { OrbitControls } from './controls/orbit_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
 import { Coins } from './game/coins'
@@ -9,14 +9,14 @@ import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine?: EngineParams
-  controls: 'third-person' | 'overlord'
+  controls: 'tps' | 'orbit'
 }
 
 export class Game {
   params: Params
   engine: Engine
   stateMachine: GameStateMachine
-  controls: ThirdPersonControls | OverlordControls
+  controls: ThirdPersonControls | OrbitControls
   map: GameMap
   character: Character
   score: Score
@@ -35,11 +35,11 @@ export class Game {
   }
 
   private initControls() {
-    if (this.params.controls === 'third-person')
+    if (this.params.controls === 'tps')
       this.controls = new ThirdPersonControls({
         engine: this.engine,
       })
-    else if (this.params.controls === 'overlord') this.controls = new OverlordControls(this.engine)
+    else if (this.params.controls === 'orbit') this.controls = new OrbitControls({ engine: this.engine })
   }
 
   private initMap() {
@@ -51,8 +51,6 @@ export class Game {
   }
 
   initCharacter() {
-    const controls = this.controls instanceof ThirdPersonControls ? this.controls : undefined
-
     this.character = new Character({
       engine: this.engine,
       name: Object.values(Characters)[Math.floor(Math.random() * Object.values(Characters).length)],
@@ -62,7 +60,7 @@ export class Game {
         z: 0,
       },
       orientation: 0,
-      controls,
+      controls: this.controls,
     })
   }
 

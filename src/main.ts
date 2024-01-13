@@ -5,5 +5,5 @@ new Game({
   engine: {
     debugUi: import.meta.env.DEV,
   },
-  controls: 'third-person',
+  controls: 'tps',
 })
