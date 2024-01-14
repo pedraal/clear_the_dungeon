@@ -4,7 +4,7 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import { Geometry } from '../../../vendor/deprecated_geometry'
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Because why not.
-export class MyCannonUtils {
+export class CannonUtils {
   public static CreateBox(geometry: THREE.BufferGeometry): CANNON.Box {
     const size = new THREE.Vector3()
     geometry.computeBoundingBox()

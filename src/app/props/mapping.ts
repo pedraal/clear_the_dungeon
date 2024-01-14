@@ -1,9 +1,9 @@
 import * as CANNON from 'cannon-es'
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import CannonUtils from '../../../vendor/cannon_utils'
+import SbcodeCannonUtils from '../../../vendor/cannon_utils'
 import { Engine, PhysicDebuggerModes } from '../engine'
+import { CannonUtils } from '../utils/cannon_utils'
 import { GLTFUtils } from '../utils/gltf_utils'
-import { MyCannonUtils } from '../utils/my_cannon_utils'
 
 // Assets source : https://kaylousberg.com/game-assets/prototype-bits
 export enum Mappings {
@@ -133,7 +133,7 @@ export class Mapping {
     })
     const bodyPosition = new CANNON.Vec3()
     bodyPosition.copy(this.mesh.position as unknown as CANNON.Vec3)
-    if (this.shapeAlgorithm === 'box') bodyPosition.y += MyCannonUtils.BoxYOffset(this.mesh.geometry)
+    if (this.shapeAlgorithm === 'box') bodyPosition.y += CannonUtils.BoxYOffset(this.mesh.geometry)
     this.body.position.copy(bodyPosition)
     this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
 
@@ -147,13 +147,14 @@ export class Mapping {
   }
 
   get cannonShape() {
-    if (this.shapeAlgorithm === 'convex') return MyCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
+    if (this.shapeAlgorithm === 'convex') return CannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
     else if (this.shapeAlgorithm === 'convex-deprecated')
-      return MyCannonUtils.CreateConvexPolyhedronFromDeprecatedGeometry(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sbcode-convex') return CannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sbcode-trimesh') return CannonUtils.CreateTrimesh(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'box') return MyCannonUtils.CreateBox(this.mesh.geometry)
-    else return MyCannonUtils.CreateBox(this.mesh.geometry)
+      return CannonUtils.CreateConvexPolyhedronFromDeprecatedGeometry(this.mesh.geometry)
+    else if (this.shapeAlgorithm === 'sbcode-convex')
+      return SbcodeCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
+    else if (this.shapeAlgorithm === 'sbcode-trimesh') return SbcodeCannonUtils.CreateTrimesh(this.mesh.geometry)
+    else if (this.shapeAlgorithm === 'box') return CannonUtils.CreateBox(this.mesh.geometry)
+    else return CannonUtils.CreateBox(this.mesh.geometry)
   }
 
   remove() {

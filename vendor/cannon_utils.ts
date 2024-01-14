@@ -13,7 +13,7 @@ interface Face3 {
   normals: THREE.Vector3[]
 }
 
-class CannonUtils {
+class SbcodeCannonUtils {
   public static CreateTrimesh(
     geometry: THREE.BufferGeometry
   ): CANNON.Trimesh {
@@ -126,4 +126,4 @@ class CannonUtils {
   }
 }
 
-export default CannonUtils
+export default SbcodeCannonUtils
