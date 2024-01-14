@@ -35,7 +35,7 @@ export class Coins {
         this.removeCoin(coin)
       }
 
-      if (this.game.character.objectIsWithinHitbox(coinPosition)) {
+      if (this.game.character.hitbox.containsPoint(coinPosition)) {
         this.gather(coin)
       }
     }
