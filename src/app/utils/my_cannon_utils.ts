@@ -5,6 +5,26 @@ import { Geometry } from '../../../vendor/deprecated_geometry'
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Because why not.
 export class MyCannonUtils {
+  public static CreateBox(geometry: THREE.BufferGeometry): CANNON.Box {
+    const size = new THREE.Vector3()
+    geometry.computeBoundingBox()
+    geometry.boundingBox?.getSize(size)
+    return new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2))
+  }
+
+  public static BoxYOffset(geometry: THREE.BufferGeometry): number {
+    const size = new THREE.Vector3()
+    geometry.computeBoundingBox()
+    geometry.boundingBox?.getSize(size)
+    return size.y / 2
+  }
+
+  public static CreateBoxFromThreeBox(threeBox: THREE.Box3): CANNON.Box {
+    const size = new THREE.Vector3()
+    threeBox.getSize(size)
+    return new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2))
+  }
+
   public static CreateConvexPolyhedron(geometry: THREE.BufferGeometry): CANNON.ConvexPolyhedron {
     const cleanedGeometry = BufferGeometryUtils.mergeVertices(geometry)
 

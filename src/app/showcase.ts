@@ -1,4 +1,4 @@
-import { OverlordControls } from './controls/overlord_controls'
+import { OrbitControls } from './controls/orbit_controls'
 import { Engine, Params as EngineParams } from './engine'
 import { Box } from './props/box'
 import { Mapping, Mappings } from './props/mapping'
@@ -15,7 +15,7 @@ export class Showcase {
   params: Params
   engine: Engine
   stateMachine: ShowcaseStateMachine
-  controls: OverlordControls
+  controls: OrbitControls
 
   rowLength = 8
   cellSize = 6
@@ -23,7 +23,7 @@ export class Showcase {
   constructor(params: Params) {
     this.params = params
     this.engine = new Engine(this.params.engine || {})
-    this.controls = new OverlordControls(this.engine)
+    this.controls = new OrbitControls({ engine: this.engine })
     this.engine.camera.position.set(60, 30, 60)
     this.stateMachine = new ShowcaseStateMachine(this)
     this.stateMachine.setState('loading')
@@ -41,10 +41,17 @@ export class Showcase {
     let z = firstCellZ
 
     for (const name of [...Object.values(Mappings)]) {
-      new Mapping({ engine: this.engine, name, position: { x, y: 0, z }, mass: 0, orientation: 0 })
+      new Mapping({
+        engine: this.engine,
+        name,
+        position: { x, y: 0, z },
+        mass: 0,
+        orientation: 0,
+        shapeAlgorithm: 'sbcode-trimesh',
+      })
 
-      if (this.params.sphere) new Sphere({ engine: this.engine, radius: 0.5, position: { x, y: 8, z } })
-      else if (this.params.box) new Box({ engine: this.engine, side: 0.5, position: { x, y: 8, z } })
+      if (this.params.sphere) new Sphere({ engine: this.engine, radius: 0.5, position: { x, y: 15, z } })
+      else if (this.params.box) new Box({ engine: this.engine, side: 0.5, position: { x, y: 15, z } })
 
       if (x === lastCellX) {
         x = firstCellX

@@ -1,6 +1,6 @@
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
-import { Engine } from '../engine'
+import { Engine, PhysicDebuggerModes } from '../engine'
 
 interface Params {
   engine: Engine
@@ -33,7 +33,7 @@ export class Sphere {
     })
     this.body.position.copy(this.mesh.position as unknown as CANNON.Vec3)
 
-    if (!this.engine.physicsDebugger) this.engine.scene.add(this.mesh)
+    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
     this.engine.world.addBody(this.body)
     this.engine.updatables.push(this)
   }

@@ -7,8 +7,14 @@ import { Character } from './props/character'
 import { Mapping } from './props/mapping'
 import { Updatable } from './types'
 
+export enum PhysicDebuggerModes {
+  Off = 0,
+  On = 1,
+  Strict = 2,
+}
+
 export interface Params {
-  physicsDebugger?: boolean
+  physicsDebugger?: PhysicDebuggerModes
   gridHelper?: boolean
   axesHelper?: boolean
   debugUi?: boolean
@@ -88,7 +94,8 @@ export class Engine {
     })
     this.world.addContactMaterial(defaultContactMaterial)
 
-    if (this.params.physicsDebugger) this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
+    if (this.params.physicsDebugger !== PhysicDebuggerModes.Off)
+      this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
   }
 
   private initGlobalLights() {

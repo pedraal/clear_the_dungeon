@@ -14,7 +14,7 @@ export class OrbitControls extends BaseKeyboardControls {
   constructor(params: Params) {
     super(params)
 
-    this.engine.camera.position.set(10, 10, 10)
+    this.engine.camera.position.set(-10, 20, -10)
     this.controls = new ThreeOrbitControls(this.engine.camera, this.engine.canvas)
     this.startListeners()
   }
