@@ -55,9 +55,9 @@ export class Game {
       engine: this.engine,
       name: Object.values(Characters)[Math.floor(Math.random() * Object.values(Characters).length)],
       position: {
-        x: 0,
+        x: this.map.spawn.x,
         y: 2,
-        z: 0,
+        z: this.map.spawn.z,
       },
       orientation: 0,
       controls: this.controls,
@@ -97,7 +97,7 @@ class LoadingState extends GameState {
   enter() {
     this.machine.game.init()
     this.machine.game.engine.loadModels().then(() => {
-      this.machine.game.map.generateFloor()
+      this.machine.game.map.generate()
       this.machine.game.initCharacter()
 
       this.machine.setState('idle')
@@ -147,7 +147,7 @@ class PlayingState extends GameState {
     if (this.machine.game.controls instanceof ThirdPersonControls) {
       this.machine.game.controls.enable()
     }
-    this.machine.game.character.mesh.position.set(0, 0, 0)
+    this.machine.game.character.mesh.position.copy(this.machine.game.map.spawn as THREE.Vector3)
     this.coins = new Coins(this.machine.game)
     if (this.playingUiEl) this.playingUiEl.style.display = 'block'
   }

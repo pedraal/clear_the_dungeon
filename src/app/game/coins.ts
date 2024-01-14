@@ -80,8 +80,15 @@ export class Coins {
   }
 
   private spawnX() {
-    const range = 15
-    return Math.floor(Math.random() * range) - range / 2
+    return (
+      Math.floor(
+        Math.random() *
+          (this.game.map.xBoundings[1] * this.game.map.cellSide -
+            this.game.map.xBoundings[0] * this.game.map.cellSide +
+            1),
+      ) +
+      this.game.map.xBoundings[0] * this.game.map.cellSide
+    )
   }
 
   private spawnY() {
