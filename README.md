@@ -12,7 +12,7 @@ This is a work in progress, the following list is not exhaustive and is subject 
 ### Alpha
 - [x] `Loading` screen
 - [x] `Main Menu` screen
-- [ ] `Game Over`"" screen
+- [ ] `Game Over` screen
 - [x] Coins gathering
 - [x] Basic movements (up, down, left, right, jump)
 - [x] Keyboard controls
