@@ -38,8 +38,8 @@ export class GameMap {
       }
     }
 
-    this.injectMapping(5, 0, 4, Mappings.Cube_Prototype_Large_B, 'box')
-    this.injectMapping(7, 0, 4, Mappings.Cube_Prototype_Small, 'box')
+    // this.injectMapping(5, 0, 4, Mappings.Cube_Prototype_Large_B, 'box')
+    // this.injectMapping(7, 0, 4, Mappings.Cube_Prototype_Small, 'box')
     // this.definition
     //   .get(7)
     //   ?.get(6)
