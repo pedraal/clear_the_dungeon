@@ -1,7 +1,5 @@
-import * as THREE from 'three'
 import { Engine } from '../engine'
 import { Mapping, Mappings } from '../props/mapping'
-import { Sphere } from '../props/sphere'
 
 export class GameMap {
   cellSide = 4
@@ -15,7 +13,7 @@ export class GameMap {
     this.engine = engine
     this.spawn = {
       x: 5 * this.cellSide,
-      y: 0,
+      y: 0.1,
       z: 2 * this.cellSide,
     }
     this.initDefinition()
@@ -34,29 +32,48 @@ export class GameMap {
   generate() {
     for (let x = this.xBoundings[0]; x <= this.xBoundings[1]; x++) {
       for (let z = this.zBoundings[0]; z <= this.zBoundings[1]; z++) {
-        this.injectMapping(x, -0.5, z, Mappings.Floor_Dirt, 'box')
+        this.pushProp(x, -0.5, z, (x, y, z) => {
+          return new Mapping({
+            engine: this.engine,
+            name: Mappings.Floor_Dirt,
+            position: { y, ...this.convertMapPosition(x, z) },
+          })
+        })
       }
     }
 
-    // this.injectMapping(5, 0, 4, Mappings.Cube_Prototype_Large_B, 'box')
-    // this.injectMapping(7, 0, 4, Mappings.Cube_Prototype_Small, 'box')
-    // this.definition
-    //   .get(7)
-    //   ?.get(6)
-    //   ?.push(
-    //     new Sphere({ radius: 1, position: { x: 6 * this.cellSide, y: 1, z: 4 * this.cellSide }, engine: this.engine }),
-    //   )
+    this.pushProp(7, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.target_stand_A,
+        orientation: 1,
+        position: { y, ...this.convertMapPosition(x, z) },
+        shapeAlgorithm: 'sbcode-trimesh',
+      })
+    })
+
+    this.pushProp(6, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Cube_Prototype_Small,
+        shapeAlgorithm: 'sphere',
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
+
+    this.pushProp(5, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Cube_Prototype_Large_A,
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
   }
 
-  injectMapping(x: number, y: number, z: number, mappingName: Mappings, shapeAlgorithm?: Mapping['shapeAlgorithm']) {
-    this.getCell(x, z)?.push(
-      new Mapping({
-        engine: this.engine,
-        name: mappingName,
-        position: { y, ...this.convertMapPosition(x, z) },
-        shapeAlgorithm,
-      }),
-    )
+  pushProp(x: number, y: number, z: number, block: (x: number, y: number, z: number) => Mapping) {
+    const prop = block(x, y, z)
+    this.getCell(x, z)?.push(prop)
+    return prop
   }
 
   getCell(x: number, z: number) {
