@@ -63,6 +63,7 @@ export class Coins {
         engine: this.game.engine,
         name: Coins.MappingNames[randomCoin],
         position: { x: this.spawnX(), y: this.spawnY(), z: this.spawnZ },
+        noPhysics: true,
       }),
     )
   }

@@ -1,5 +1,7 @@
+import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Engine } from '../engine'
+import { Character } from '../props/character'
 
 interface Params {
   engine: Engine
@@ -9,22 +11,22 @@ export class BaseKeyboardControls {
   params: Params
   engine: Engine
   camera: THREE.PerspectiveCamera
-  target: THREE.Object3D<THREE.Object3DEventMap>
+  target: Character
   forward: boolean
   backward: boolean
   left: boolean
   right: boolean
   jump: boolean
-  movementVector: THREE.Vector3
-  quaternion: THREE.Quaternion
+  velocity: CANNON.Vec3
+  quaternion: CANNON.Quaternion
 
   constructor(params: Params) {
     this.params = params
     this.engine = this.params.engine
     this.camera = this.engine.camera
 
-    this.movementVector = new THREE.Vector3(0, 0, 0)
-    this.quaternion = new THREE.Quaternion()
+    this.velocity = new CANNON.Vec3(0, 0, 0)
+    this.quaternion = new CANNON.Quaternion()
 
     this.forward = false
     this.backward = false
@@ -36,20 +38,24 @@ export class BaseKeyboardControls {
     this.engine.updatables.push(this)
   }
 
-  assignTarget(target: THREE.Object3D) {}
+  assignTarget(target: Character) {}
   updateCamera() {}
 
   update() {
-    if (this.forward) this.movementVector.z = 1
-    else if (this.backward) this.movementVector.z = -1
-    else this.movementVector.z = 0
+    this.updateVelocity()
+  }
 
-    if (this.left) this.movementVector.x = 1
-    else if (this.right) this.movementVector.x = -1
-    else this.movementVector.x = 0
+  updateVelocity() {
+    if (this.forward) this.velocity.z = 1
+    else if (this.backward) this.velocity.z = -1
+    else this.velocity.z = 0
 
-    if (this.jump) this.movementVector.y = 2
-    else this.movementVector.y = 0
+    if (this.left) this.velocity.x = 1
+    else if (this.right) this.velocity.x = -1
+    else this.velocity.x = 0
+
+    if (this.jump) this.velocity.y = 2
+    else this.velocity.y = 0
   }
 
   startListeners() {

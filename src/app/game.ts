@@ -1,3 +1,4 @@
+import * as CANNON from 'cannon-es'
 import { OrbitControls } from './controls/orbit_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
@@ -56,7 +57,7 @@ export class Game {
       name: Object.values(Characters)[Math.floor(Math.random() * Object.values(Characters).length)],
       position: {
         x: this.map.spawn.x,
-        y: 2,
+        y: this.map.spawn.y,
         z: this.map.spawn.z,
       },
       orientation: 0,
@@ -147,7 +148,7 @@ class PlayingState extends GameState {
     if (this.machine.game.controls instanceof ThirdPersonControls) {
       this.machine.game.controls.enable()
     }
-    this.machine.game.character.mesh.position.copy(this.machine.game.map.spawn as THREE.Vector3)
+    this.machine.game.character.setBodyPosition(this.machine.game.map.spawn as CANNON.Vec3)
     this.coins = new Coins(this.machine.game)
     if (this.playingUiEl) this.playingUiEl.style.display = 'block'
   }

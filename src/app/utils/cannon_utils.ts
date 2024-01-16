@@ -5,6 +5,28 @@ import { Geometry } from '../../../vendor/deprecated_geometry'
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Because why not.
 export class CannonUtils {
+  // Porting Three.js Vector3#applyQuaternion to CANNON.js : https://github.com/mrdoob/three.js/blob/b5c272cf408cb33153190fa715d81581bd95ee47/src/math/Vector3.js#L289-L309
+  public static ApplyQuaternionToVec3(vec: CANNON.Vec3, quaternion: CANNON.Quaternion) {
+    const x = vec.x
+    const y = vec.y
+    const z = vec.z
+    const qx = quaternion.x
+    const qy = quaternion.y
+    const qz = quaternion.z
+    const qw = quaternion.w
+
+    const ix = qw * x + qy * z - qz * y
+    const iy = qw * y + qz * x - qx * z
+    const iz = qw * z + qx * y - qy * x
+    const iw = -qx * x - qy * y - qz * z
+
+    vec.x = ix * qw + iw * -qx + iy * -qz - iz * -qy
+    vec.y = iy * qw + iw * -qy + iz * -qx - ix * -qz
+    vec.z = iz * qw + iw * -qz + ix * -qy - iy * -qx
+
+    return vec
+  }
+
   public static CreateBox(geometry: THREE.BufferGeometry): CANNON.Box {
     const size = new THREE.Vector3()
     geometry.computeBoundingBox()

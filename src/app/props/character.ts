@@ -1,7 +1,9 @@
+import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { Engine } from '../engine'
+import { Engine, PhysicDebuggerModes } from '../engine'
 import { Controls } from '../types'
+import { CannonUtils } from '../utils/cannon_utils'
 import { GLTFUtils } from '../utils/gltf_utils'
 import { State, StateMachine } from '../utils/state_machine'
 
@@ -22,6 +24,122 @@ export enum Characters {
 }
 
 export class Character {
+  params: Params
+  engine: Engine
+  mesh: THREE.Group
+  mixer: THREE.AnimationMixer
+  model: GLTF
+  body: CANNON.Body
+  controls: Controls | undefined
+  stateMachine: CharacterStateMachine
+  yHalfExtend: number
+
+  constructor(params: Params) {
+    this.params = params
+    this.engine = this.params.engine
+    this.initModel()
+    this.initPhysics()
+    this.initEquipement()
+    this.initAnimations()
+    this.initControls()
+
+    this.stateMachine = new CharacterStateMachine(this)
+    this.stateMachine.setState('idle')
+
+    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
+    this.engine.updatables.push(this)
+  }
+
+  private initModel() {
+    this.model = GLTFUtils.cloneGltf(Character.gltfs[this.params.name]) as GLTF
+    this.mesh = this.model.scene
+    this.mesh.receiveShadow = true
+
+    this.mesh.position.copy(this.params.position as THREE.Vector3)
+    this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
+  }
+
+  private initPhysics() {
+    this.yHalfExtend = this.hitbox.getSize(new THREE.Vector3()).y / 2
+    this.body = new CANNON.Body({
+      mass: 0,
+      type: CANNON.Body.KINEMATIC,
+      shape: new CANNON.Box(new CANNON.Vec3(0.7, this.yHalfExtend, 0.7)),
+      material: this.engine.defaultMaterial,
+    })
+    this.setBodyPosition(this.mesh.position.clone() as unknown as CANNON.Vec3)
+    this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
+    this.engine.world.addBody(this.body)
+  }
+
+  private initAnimations() {
+    this.mixer = new THREE.AnimationMixer(this.mesh)
+  }
+
+  private initControls() {
+    this.controls = this.params.controls
+    if (this.controls) {
+      this.controls.assignTarget(this)
+    }
+  }
+
+  private initEquipement() {
+    let left: THREE.Bone | undefined
+    let right: THREE.Bone | undefined
+
+    this.mesh.traverse((node) => {
+      if (node instanceof THREE.Bone && node.name === 'handslotl') {
+        left = node
+      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
+        right = node
+      }
+    })
+
+    if (left) {
+      left.children = left.children.splice(1, 1)
+    }
+    if (right) {
+      right.children = right.children.splice(0, 1)
+    }
+  }
+
+  update(dt: number, elapsedTime: number) {
+    this.mixer.update(dt)
+    this.handleMovement(dt)
+    this.stateMachine.currentState?.update(dt, elapsedTime)
+    this.controls?.updateCamera()
+  }
+
+  private handleMovement(dt: number) {
+    if (!this.controls) return
+
+    this.body.quaternion.copy(this.body.quaternion.slerp(this.controls.quaternion, 0.05))
+    this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
+
+    let velocity = this.controls.velocity.clone()
+    velocity = CannonUtils.ApplyQuaternionToVec3(velocity, this.body.quaternion)
+    velocity = velocity.scale(6 * dt)
+    velocity.y = 0 // vertical movement is handled by the jump animation
+
+    this.body.position.copy(this.body.position.clone().vadd(velocity))
+
+    this.mesh.position.copy(this.body.position as unknown as THREE.Vector3)
+    this.mesh.position.y -= this.yHalfExtend
+  }
+
+  setBodyPosition(position: CANNON.Vec3) {
+    this.body.position.copy(position as unknown as CANNON.Vec3)
+    this.body.position.y += this.yHalfExtend
+  }
+
+  getAnimation(name: string) {
+    return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
+  }
+
+  get hitbox() {
+    return new THREE.Box3().setFromObject(this.mesh)
+  }
+
   static gltfs: Record<string, GLTF> = {}
   static loader = new GLTFLoader()
   static async load() {
@@ -43,97 +161,6 @@ export class Character {
       })
 
     await Promise.all(Object.values(Characters).map((name) => loadPromise(name)))
-  }
-
-  params: Params
-  engine: Engine
-  mesh: THREE.Group
-  mixer: THREE.AnimationMixer
-  model: GLTF
-  controls: Controls | undefined
-  stateMachine: CharacterStateMachine
-
-  constructor(params: Params) {
-    this.params = params
-    this.engine = this.params.engine
-    this.initModel()
-    this.initEquipement()
-    this.initControls()
-    this.initAnimations()
-
-    this.stateMachine = new CharacterStateMachine(this)
-    this.stateMachine.setState('idle')
-
-    this.engine.scene.add(this.mesh)
-    this.engine.updatables.push(this)
-  }
-
-  private initModel() {
-    this.model = GLTFUtils.cloneGltf(Character.gltfs[this.params.name]) as GLTF
-    this.mesh = this.model.scene
-    this.mesh.receiveShadow = true
-    this.mesh.position.copy(this.params.position as THREE.Vector3)
-    this.mesh.position.y -= 2
-    this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
-  }
-
-  private initAnimations() {
-    this.mixer = new THREE.AnimationMixer(this.mesh)
-  }
-
-  private initControls() {
-    this.controls = this.params.controls
-    if (this.controls) {
-      this.controls.assignTarget(this.mesh)
-    }
-  }
-
-  private initEquipement() {
-    let left: THREE.Bone | undefined
-    let right: THREE.Bone | undefined
-
-    this.mesh.traverse((node) => {
-      if (node instanceof THREE.Bone && node.name === 'handslotl') {
-        left = node
-      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
-        right = node
-      }
-    })
-
-    if (left) {
-      left.clear()
-    }
-    if (right) {
-      right.children = right.children.splice(0, 1)
-    }
-  }
-
-  update(dt: number, elapsedTime: number) {
-    this.mixer.update(dt)
-    this.handleMovement(dt)
-    this.stateMachine.currentState?.update(dt, elapsedTime)
-  }
-
-  private handleMovement(dt: number) {
-    if (!this.controls) return
-
-    this.mesh.quaternion.slerp(this.controls.quaternion, 0.05)
-
-    const movementVector = this.controls.movementVector.clone()
-    movementVector.applyQuaternion(this.mesh.quaternion)
-    const velocity = 6 * dt
-    movementVector.y = 0 // vertical movement is handled by the jump animation
-    this.mesh.position.add(movementVector.multiplyScalar(velocity))
-
-    this.controls.updateCamera()
-  }
-
-  getAnimation(name: string) {
-    return this.model.animations.find((a) => a.name === name) as THREE.AnimationClip
-  }
-
-  get hitbox() {
-    return new THREE.Box3().setFromObject(this.mesh)
   }
 }
 
@@ -167,12 +194,12 @@ class CharacterStateMachine extends StateMachine {
 
     if (!this.character.controls) return direction
 
-    const movementVector = this.character.controls.movementVector
-    if (movementVector.y > 1) direction.jump = true
-    else if (movementVector.z === -1) direction.backward = true
-    else if (movementVector.x === -1) direction.right = true
-    else if (movementVector.x === 1) direction.left = true
-    else if (movementVector.z === 1) direction.forward = true
+    const velocity = this.character.controls.velocity
+    if (velocity.y > 1) direction.jump = true
+    else if (velocity.z === -1) direction.backward = true
+    else if (velocity.x === -1) direction.right = true
+    else if (velocity.x === 1) direction.left = true
+    else if (velocity.z === 1) direction.forward = true
 
     return direction
   }
@@ -298,7 +325,7 @@ class JumpingState extends CharacterState {
     else {
       const t = this.elapsedTime / this.halfDuration
       const value = Math.sin((t * Math.PI) / 2)
-      this.machine.character.mesh.position.y = value * 2.2
+      this.machine.character.body.position.y = value * 2.2 + this.machine.character.yHalfExtend
     }
   }
 }

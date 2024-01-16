@@ -1,5 +1,7 @@
+import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Engine } from '../engine'
+import { Character } from '../props/character'
 import { BaseKeyboardControls } from './base_keyboard_controls'
 
 interface Params {
@@ -20,16 +22,16 @@ export class ThirdPersonControls extends BaseKeyboardControls {
 
   update() {
     if (this.disabled) {
-      this.movementVector.set(0, 0, 0)
+      this.velocity.set(0, 0, 0)
       return
     }
 
     super.update()
   }
 
-  assignTarget(target: THREE.Object3D) {
+  assignTarget(target: Character) {
     this.target = target
-    this.quaternion = this.target.quaternion.clone()
+    this.quaternion = this.target.body.quaternion.clone()
     this.updateCamera()
   }
 
@@ -37,11 +39,11 @@ export class ThirdPersonControls extends BaseKeyboardControls {
     const cameraPosition = this.lookBackward ? new THREE.Vector3(0, 2, 5) : new THREE.Vector3(-2, 4, -4)
     const cameraLookAt = this.lookBackward ? new THREE.Vector3(0, 0, -20) : new THREE.Vector3(0, 0, 20)
 
-    const rotatedCameraPosition = cameraPosition.clone().applyQuaternion(this.target.quaternion)
-    const rotatedCameraLookAt = cameraLookAt.clone().applyQuaternion(this.target.quaternion)
+    const rotatedCameraPosition = cameraPosition.clone().applyQuaternion(this.target.mesh.quaternion)
+    const rotatedCameraLookAt = cameraLookAt.clone().applyQuaternion(this.target.mesh.quaternion)
 
-    this.camera.position.lerp(this.target.position.clone().add(rotatedCameraPosition), 0.05)
-    this.camera.lookAt(this.target.position.clone().add(rotatedCameraLookAt))
+    this.camera.position.lerp(this.target.mesh.position.clone().add(rotatedCameraPosition), 0.05)
+    this.camera.lookAt(this.target.mesh.position.clone().add(rotatedCameraLookAt))
   }
 
   enable() {
@@ -100,8 +102,8 @@ export class ThirdPersonControls extends BaseKeyboardControls {
 
     const rotationSensitivity = 0.003
 
-    this.quaternion.multiply(
-      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotationSensitivity),
+    this.quaternion = this.quaternion.mult(
+      new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -deltaX * rotationSensitivity),
     )
   }
 }

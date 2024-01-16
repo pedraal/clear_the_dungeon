@@ -1,12 +1,15 @@
+import * as CANNON from 'cannon-es'
+import { Character } from './props/character'
+
 export interface Controls {
   forward: boolean
   backward: boolean
   left: boolean
   right: boolean
   jump: boolean
-  movementVector: THREE.Vector3
-  quaternion: THREE.Quaternion
-  assignTarget(target: THREE.Object3D): void
+  velocity: CANNON.Vec3
+  quaternion: CANNON.Quaternion
+  assignTarget(target: Character): void
   updateCamera(): void
 }
 
