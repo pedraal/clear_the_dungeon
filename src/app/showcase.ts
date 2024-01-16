@@ -1,8 +1,6 @@
 import { OrbitControls } from './controls/orbit_controls'
 import { Engine, Params as EngineParams } from './engine'
-import { Box } from './props/box'
 import { Mapping, Mappings } from './props/mapping'
-import { Sphere } from './props/sphere'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
@@ -50,8 +48,15 @@ export class Showcase {
         shapeAlgorithm: 'sbcode-trimesh',
       })
 
-      if (this.params.sphere) new Sphere({ engine: this.engine, radius: 0.5, position: { x, y: 15, z } })
-      else if (this.params.box) new Box({ engine: this.engine, side: 0.5, position: { x, y: 15, z } })
+      const fallingItem = this.params.sphere ? 'sphere' : this.params.box ? 'box' : null
+      if (fallingItem)
+        new Mapping({
+          engine: this.engine,
+          name: Mappings.Box_A,
+          position: { x, y: 15, z },
+          shapeAlgorithm: fallingItem,
+          mass: 1,
+        })
 
       if (x === lastCellX) {
         x = firstCellX

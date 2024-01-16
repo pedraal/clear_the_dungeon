@@ -12,6 +12,12 @@ export class CannonUtils {
     return new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2))
   }
 
+  public static CreateSphere(geometry: THREE.BufferGeometry): CANNON.Sphere {
+    geometry.computeBoundingSphere()
+    const radius = geometry.boundingSphere?.radius || 1
+    return new CANNON.Sphere(radius)
+  }
+
   public static BoxYOffset(geometry: THREE.BufferGeometry): number {
     const size = new THREE.Vector3()
     geometry.computeBoundingBox()

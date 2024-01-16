@@ -81,8 +81,10 @@ interface Params {
   name: Mappings
   position: { x: number; y: number; z: number }
   orientation?: number
+  noPhysics?: boolean
   mass?: number
-  shapeAlgorithm?: 'convex' | 'convex-deprecated' | 'sbcode-convex' | 'sbcode-trimesh' | 'box'
+  type?: CANNON.BodyType
+  shapeAlgorithm?: 'convex' | 'convex-deprecated' | 'sbcode-convex' | 'sbcode-trimesh' | 'box' | 'sphere'
 }
 
 export class Mapping {
@@ -119,26 +121,36 @@ export class Mapping {
   constructor(params: Params) {
     this.params = params
     this.engine = this.params.engine
-    this.model = GLTFUtils.cloneGltf(Mapping.gltfs[params.name]) as GLTF
+
+    this.initModel()
+    if (!this.params.noPhysics) this.initPhysics()
+
+    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
+    if (!this.params.noPhysics) this.engine.world.addBody(this.body)
+    this.engine.updatables.push(this)
+  }
+
+  initModel() {
+    this.model = GLTFUtils.cloneGltf(Mapping.gltfs[this.params.name]) as GLTF
     this.mesh = this.model.scene.children[0] as THREE.Mesh
     this.mesh.receiveShadow = true
-    this.mesh.position.copy(params.position as THREE.Vector3)
-    this.mesh.rotation.y = Math.PI * (params.orientation || 0)
-    this.shapeAlgorithm = params.shapeAlgorithm || 'convex-deprecated'
+    this.mesh.position.copy(this.params.position as THREE.Vector3)
+    this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
+  }
 
+  initPhysics() {
+    this.shapeAlgorithm = this.params.shapeAlgorithm || 'box'
     this.body = new CANNON.Body({
-      mass: params.mass || 0,
+      mass: this.params.mass || 0,
+      type: this.params.type || this.params.mass ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC,
       shape: this.cannonShape,
       material: this.engine.defaultMaterial,
     })
     const bodyPosition = new CANNON.Vec3()
     bodyPosition.copy(this.mesh.position as unknown as CANNON.Vec3)
-    if (this.shapeAlgorithm === 'box') bodyPosition.y += CannonUtils.BoxYOffset(this.mesh.geometry)
+    if (['box'].includes(this.shapeAlgorithm)) bodyPosition.y += CannonUtils.BoxYOffset(this.mesh.geometry)
     this.body.position.copy(bodyPosition)
     this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
-
-    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
-    this.engine.world.addBody(this.body)
   }
 
   update() {
@@ -154,12 +166,13 @@ export class Mapping {
       return SbcodeCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
     else if (this.shapeAlgorithm === 'sbcode-trimesh') return SbcodeCannonUtils.CreateTrimesh(this.mesh.geometry)
     else if (this.shapeAlgorithm === 'box') return CannonUtils.CreateBox(this.mesh.geometry)
+    else if (this.shapeAlgorithm === 'sphere') return CannonUtils.CreateSphere(this.mesh.geometry)
     else return CannonUtils.CreateBox(this.mesh.geometry)
   }
 
   remove() {
     this.engine.updatables = this.engine.updatables.filter((u) => u !== this)
-    this.engine.world.removeBody(this.body)
+    if (!this.params.noPhysics) this.engine.world.removeBody(this.body)
     this.engine.scene.remove(this.mesh)
   }
 }
