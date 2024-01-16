@@ -42,32 +42,32 @@ export class GameMap {
       }
     }
 
-    this.pushProp(7, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.target_stand_A,
-        orientation: 1,
-        position: { y, ...this.convertMapPosition(x, z) },
-        shapeAlgorithm: 'sbcode-trimesh',
-      })
-    })
+    // this.pushProp(7, 0, 4, (x, y, z) => {
+    //   return new Mapping({
+    //     engine: this.engine,
+    //     name: Mappings.target_stand_A,
+    //     orientation: 1,
+    //     position: { y, ...this.convertMapPosition(x, z) },
+    //     shapeAlgorithm: 'sbcode-trimesh',
+    //   })
+    // })
 
-    this.pushProp(6, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Cube_Prototype_Small,
-        shapeAlgorithm: 'sphere',
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
+    // this.pushProp(6, 0, 4, (x, y, z) => {
+    //   return new Mapping({
+    //     engine: this.engine,
+    //     name: Mappings.Cube_Prototype_Small,
+    //     shapeAlgorithm: 'sphere',
+    //     position: { y, ...this.convertMapPosition(x, z) },
+    //   })
+    // })
 
-    this.pushProp(5, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Cube_Prototype_Large_A,
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
+    // this.pushProp(5, 0, 4, (x, y, z) => {
+    //   return new Mapping({
+    //     engine: this.engine,
+    //     name: Mappings.Cube_Prototype_Large_A,
+    //     position: { y, ...this.convertMapPosition(x, z) },
+    //   })
+    // })
   }
 
   pushProp(x: number, y: number, z: number, block: (x: number, y: number, z: number) => Mapping) {

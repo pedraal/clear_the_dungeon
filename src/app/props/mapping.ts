@@ -154,6 +154,7 @@ export class Mapping {
   }
 
   update() {
+    if (this.params.noPhysics) return
     this.mesh.position.copy(this.body.position as unknown as THREE.Vector3)
     this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
   }
