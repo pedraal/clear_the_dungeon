@@ -1,4 +1,5 @@
-import { OrbitControls } from './controls/orbit_controls'
+import * as THREE from 'three'
+import { FreeOrbitControls } from './controls/free_orbit_controls'
 import { Engine, Params as EngineParams } from './engine'
 import { Mapping, Mappings } from './mapping'
 import { State, StateMachine } from './utils/state_machine'
@@ -13,7 +14,7 @@ export class Showcase {
   params: Params
   engine: Engine
   stateMachine: ShowcaseStateMachine
-  controls: OrbitControls
+  controls: FreeOrbitControls
 
   rowLength = 8
   cellSize = 6
@@ -21,8 +22,7 @@ export class Showcase {
   constructor(params: Params) {
     this.params = params
     this.engine = new Engine(this.params.engine || {})
-    this.controls = new OrbitControls({ engine: this.engine })
-    this.engine.camera.position.set(60, 30, 60)
+    this.controls = new FreeOrbitControls({ engine: this.engine })
     this.stateMachine = new ShowcaseStateMachine(this)
     this.stateMachine.setState('loading')
   }
