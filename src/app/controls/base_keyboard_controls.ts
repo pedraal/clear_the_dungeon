@@ -1,7 +1,7 @@
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
+import { Character } from '../character'
 import { Engine } from '../engine'
-import { Character } from '../props/character'
 
 interface Params {
   engine: Engine

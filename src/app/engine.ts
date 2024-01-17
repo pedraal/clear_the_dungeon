@@ -3,8 +3,8 @@ import GUI from 'lil-gui'
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import CannonDebugRenderer from '../../vendor/cannon_debug_renderer'
-import { Character } from './props/character'
-import { Mapping } from './props/mapping'
+import { Character } from './character'
+import { Mapping } from './mapping'
 import { Updatable } from './types'
 
 export enum PhysicDebuggerModes {
@@ -22,7 +22,6 @@ export interface Params {
 
 export class Engine {
   canvas: HTMLCanvasElement
-  viewport: { width: number; height: number }
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   params: Params
@@ -43,65 +42,49 @@ export class Engine {
     if (!canvas) throw new Error('No canvas found')
     this.canvas = canvas
 
-    this.computeViewport()
-    this.initRenderer()
-    this.initClock()
-    this.initPhysics()
-    this.initDebugUi()
-    this.initGlobalLights()
-    this.initGlobalHelpers()
-
-    window.addEventListener('resize', this.onResize.bind(this))
-  }
-
-  loadModels() {
-    return Promise.all([Character.load(), Mapping.load()])
-  }
-
-  private computeViewport() {
-    this.viewport = {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    }
-  }
-
-  private initRenderer() {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true })
+    this.renderer.setSize(this.viewport.width, this.viewport.height)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(90, this.viewport.width / this.viewport.height, 0.1, 100)
     this.updatables = []
 
-    this.renderer.setSize(this.viewport.width, this.viewport.height)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  }
-
-  private initClock() {
     this.clock = new THREE.Clock()
     this.previousElapsedTime = 0
-  }
 
-  private initPhysics() {
     this.world = new CANNON.World()
     this.world.gravity.set(0, -9.82, 0)
     const broadphase = new CANNON.SAPBroadphase(this.world)
     this.world.broadphase = broadphase
     this.world.allowSleep = true
-
     this.defaultMaterial = new CANNON.Material('default')
-    const defaultContactMaterial = new CANNON.ContactMaterial(this.defaultMaterial, this.defaultMaterial, {
-      friction: 0.1,
-      restitution: 0,
-    })
-    this.world.addContactMaterial(defaultContactMaterial)
-
+    this.world.addContactMaterial(
+      new CANNON.ContactMaterial(this.defaultMaterial, this.defaultMaterial, {
+        friction: 0.1,
+        restitution: 0,
+      }),
+    )
     if (this.params.physicsDebugger !== PhysicDebuggerModes.Off)
       this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
-  }
 
-  private initGlobalLights() {
+    if (this.params.debugUi) {
+      this.gui = new GUI()
+      this.stats = new Stats()
+      document.body.appendChild(this.stats.dom)
+    }
     const ambiantLight = new THREE.AmbientLight(0xffffff, 1.5)
     const directionalLight = new THREE.DirectionalLight(0xffffff, 3)
     this.scene.add(ambiantLight, directionalLight)
+
+    if (this.params.gridHelper) this.scene.add(new THREE.GridHelper(100, 100))
+    if (this.params.axesHelper) this.scene.add(new THREE.AxesHelper(10))
+
+    window.addEventListener('resize', this.onResize.bind(this))
+  }
+
+  load() {
+    return Promise.all([Character.load(), Mapping.load()])
   }
 
   private initGlobalHelpers() {
@@ -124,7 +107,6 @@ export class Engine {
   }
 
   private onResize() {
-    this.computeViewport()
     this.camera.aspect = this.viewport.width / this.viewport.height
     this.camera.updateProjectionMatrix()
 
@@ -159,5 +141,12 @@ export class Engine {
   private updateDebugUi() {
     if (!this.params.debugUi) return
     this.stats.update()
+  }
+
+  get viewport() {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }
   }
 }

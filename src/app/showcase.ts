@@ -1,6 +1,6 @@
 import { OrbitControls } from './controls/orbit_controls'
 import { Engine, Params as EngineParams } from './engine'
-import { Mapping, Mappings } from './props/mapping'
+import { Mapping, Mappings } from './mapping'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
@@ -109,7 +109,7 @@ class LoadingState extends ShowcaseStateMachineState {
   name = 'loading'
 
   enter() {
-    this.machine.showcase.engine.loadModels().then(() => {
+    this.machine.showcase.engine.load().then(() => {
       this.machine.showcase.init()
       this.machine.setState('idle')
     })

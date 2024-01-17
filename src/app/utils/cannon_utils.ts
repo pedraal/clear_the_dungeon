@@ -30,12 +30,14 @@ export class CannonUtils {
   public static CreateBox(geometry: THREE.BufferGeometry): CANNON.Box {
     const size = new THREE.Vector3()
     geometry.computeBoundingBox()
+    geometry.center()
     geometry.boundingBox?.getSize(size)
     return new CANNON.Box(new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2))
   }
 
   public static CreateSphere(geometry: THREE.BufferGeometry): CANNON.Sphere {
     geometry.computeBoundingSphere()
+    geometry.center()
     const radius = geometry.boundingSphere?.radius || 1
     return new CANNON.Sphere(radius)
   }
@@ -45,6 +47,14 @@ export class CannonUtils {
     geometry.computeBoundingBox()
     geometry.boundingBox?.getSize(size)
     return size.y / 2
+  }
+
+  public static GeometryToBodyOffset(geometry: THREE.BufferGeometry): CANNON.Vec3 {
+    const size = new THREE.Vector3()
+    geometry.computeBoundingBox()
+    geometry.center()
+    geometry.boundingBox?.getSize(size)
+    return new CANNON.Vec3(0, size.y / 2, 0)
   }
 
   public static CreateBoxFromThreeBox(threeBox: THREE.Box3): CANNON.Box {

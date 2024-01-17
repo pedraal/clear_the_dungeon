@@ -1,5 +1,5 @@
 import { Engine } from '../engine'
-import { Mapping, Mappings } from '../props/mapping'
+import { Mapping, Mappings } from '../mapping'
 
 export class GameMap {
   cellSide = 4
@@ -13,7 +13,7 @@ export class GameMap {
     this.engine = engine
     this.spawn = {
       x: 5 * this.cellSide,
-      y: 0.1,
+      y: 0,
       z: 2 * this.cellSide,
     }
     this.initDefinition()
@@ -32,7 +32,7 @@ export class GameMap {
   generate() {
     for (let x = this.xBoundings[0]; x <= this.xBoundings[1]; x++) {
       for (let z = this.zBoundings[0]; z <= this.zBoundings[1]; z++) {
-        this.pushProp(x, -0.5, z, (x, y, z) => {
+        this.pushProp(x, -0.25, z, (x, y, z) => {
           return new Mapping({
             engine: this.engine,
             name: Mappings.Floor_Dirt,

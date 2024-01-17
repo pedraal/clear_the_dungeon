@@ -1,6 +1,7 @@
+import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Game } from '../game'
-import { Mapping, Mappings } from '../props/mapping'
+import { Mapping, Mappings } from '../mapping'
 
 export class Coins {
   static MappingNames = [Mappings.Coin_A, Mappings.Coin_B, Mappings.Coin_C]
@@ -26,18 +27,17 @@ export class Coins {
       this.nextCoinAt = elapsedTime + randomTime
     }
 
-    const velocity = dt * 7
     for (const coin of this.coins) {
-      const movementVector = new THREE.Vector3(0, 0, -1)
-      coin.mesh.position.add(movementVector.multiplyScalar(velocity))
-      const coinPosition = coin.mesh.position.clone()
-      if (coin.mesh.position.z < this.unspawnZ) {
-        this.removeCoin(coin)
-      }
+      let velocity = new CANNON.Vec3(0, 0, -1)
+      velocity = velocity.scale(dt * 7)
+      coin.body.position.copy(coin.body.position.clone().vadd(velocity))
 
-      if (this.game.character.hitbox.containsPoint(coinPosition)) {
+      if (coin.body.position.z < this.unspawnZ) this.removeCoin(coin)
+      if (this.game.character.hitbox.containsPoint(coin.body.position as unknown as THREE.Vector3)) {
         this.gather(coin)
       }
+
+      coin.update()
     }
   }
 
@@ -62,8 +62,9 @@ export class Coins {
       new Mapping({
         engine: this.game.engine,
         name: Coins.MappingNames[randomCoin],
+        type: CANNON.Body.KINEMATIC,
         position: { x: this.spawnX(), y: this.spawnY(), z: this.spawnZ },
-        noPhysics: true,
+        manualUpdate: true,
       }),
     )
   }
@@ -71,13 +72,6 @@ export class Coins {
   private removeCoin(coin: Mapping) {
     this.coins = this.coins.filter((m) => m !== coin)
     coin.remove()
-  }
-  private get spawnZ() {
-    return this.game.map.zBoundings[1] * this.game.map.cellSide
-  }
-
-  private get unspawnZ() {
-    return (this.game.map.zBoundings[0] - 1) * this.game.map.cellSide
   }
 
   private spawnX() {
@@ -94,6 +88,14 @@ export class Coins {
 
   private spawnY() {
     return Math.floor(Math.random() * 4) + 1
+  }
+
+  private get spawnZ() {
+    return this.game.map.zBoundings[1] * this.game.map.cellSide
+  }
+
+  private get unspawnZ() {
+    return (this.game.map.zBoundings[0] - 1) * this.game.map.cellSide
   }
 
   remove() {

@@ -1,11 +1,12 @@
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { Engine, PhysicDebuggerModes } from '../engine'
-import { Controls } from '../types'
-import { CannonUtils } from '../utils/cannon_utils'
-import { GLTFUtils } from '../utils/gltf_utils'
-import { State, StateMachine } from '../utils/state_machine'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { Engine, PhysicDebuggerModes } from './engine'
+import { Controls } from './types'
+import { CannonUtils } from './utils/cannon_utils'
+import { GenericModel } from './utils/generic_model'
+import { GLTFUtils } from './utils/gltf_utils'
+import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine: Engine
@@ -15,51 +16,32 @@ interface Params {
   controls?: Controls
 }
 
-export enum Characters {
-  Knight = 'Knight',
-  // Barbarian = 'Barbarian',
-  // Mage = 'Mage',
-  // Rogue = 'Rogue',
-  // Rogue_Hooded = 'Rogue_Hooded',
-}
+export class Character extends GenericModel {
+  static async load() {
+    return GenericModel.load('characters', 'glb', Object.values(Characters))
+  }
 
-export class Character {
   params: Params
   engine: Engine
   mesh: THREE.Group
-  mixer: THREE.AnimationMixer
-  model: GLTF
   body: CANNON.Body
+  mixer: THREE.AnimationMixer
   controls: Controls | undefined
   stateMachine: CharacterStateMachine
   yHalfExtend: number
 
   constructor(params: Params) {
+    super(params)
     this.params = params
     this.engine = this.params.engine
-    this.initModel()
-    this.initPhysics()
-    this.initEquipement()
-    this.initAnimations()
-    this.initControls()
 
-    this.stateMachine = new CharacterStateMachine(this)
-    this.stateMachine.setState('idle')
-
-    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
-    this.engine.updatables.push(this)
-  }
-
-  private initModel() {
     this.model = GLTFUtils.cloneGltf(Character.gltfs[this.params.name]) as GLTF
+
     this.mesh = this.model.scene
     this.mesh.receiveShadow = true
-
     this.mesh.position.copy(this.params.position as THREE.Vector3)
     this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
-  }
 
-  private initPhysics() {
     this.yHalfExtend = this.hitbox.getSize(new THREE.Vector3()).y / 2
     this.body = new CANNON.Body({
       mass: 0,
@@ -69,38 +51,28 @@ export class Character {
     })
     this.setBodyPosition(this.mesh.position.clone() as unknown as CANNON.Vec3)
     this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
-    this.engine.world.addBody(this.body)
-  }
 
-  private initAnimations() {
+    this.mesh.traverse((node) => {
+      if (node instanceof THREE.Bone && node.name === 'handslotl') {
+        node.children = node.children.splice(1, 1)
+      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
+        node.children = node.children.splice(0, 1)
+      }
+    })
+
     this.mixer = new THREE.AnimationMixer(this.mesh)
-  }
 
-  private initControls() {
     this.controls = this.params.controls
     if (this.controls) {
       this.controls.assignTarget(this)
     }
-  }
 
-  private initEquipement() {
-    let left: THREE.Bone | undefined
-    let right: THREE.Bone | undefined
+    this.stateMachine = new CharacterStateMachine(this)
+    this.stateMachine.setState('idle')
 
-    this.mesh.traverse((node) => {
-      if (node instanceof THREE.Bone && node.name === 'handslotl') {
-        left = node
-      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
-        right = node
-      }
-    })
-
-    if (left) {
-      left.children = left.children.splice(1, 1)
-    }
-    if (right) {
-      right.children = right.children.splice(0, 1)
-    }
+    if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
+    this.engine.world.addBody(this.body)
+    this.engine.updatables.push(this)
   }
 
   update(dt: number, elapsedTime: number) {
@@ -108,13 +80,14 @@ export class Character {
     this.handleMovement(dt)
     this.stateMachine.currentState?.update(dt, elapsedTime)
     this.controls?.updateCamera()
+
+    console.log(this.body.position.y)
   }
 
   private handleMovement(dt: number) {
     if (!this.controls) return
 
     this.body.quaternion.copy(this.body.quaternion.slerp(this.controls.quaternion, 0.05))
-    this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
 
     let velocity = this.controls.velocity.clone()
     velocity = CannonUtils.ApplyQuaternionToVec3(velocity, this.body.quaternion)
@@ -125,6 +98,7 @@ export class Character {
 
     this.mesh.position.copy(this.body.position as unknown as THREE.Vector3)
     this.mesh.position.y -= this.yHalfExtend
+    this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
   }
 
   setBodyPosition(position: CANNON.Vec3) {
@@ -138,29 +112,6 @@ export class Character {
 
   get hitbox() {
     return new THREE.Box3().setFromObject(this.mesh)
-  }
-
-  static gltfs: Record<string, GLTF> = {}
-  static loader = new GLTFLoader()
-  static async load() {
-    const loadPromise = (name: string): Promise<void> =>
-      new Promise((resolve) => {
-        Character.loader.load(
-          `/gltf/characters/${name}.glb`,
-          (model) => {
-            Character.gltfs[name] = model
-            resolve()
-          },
-          (xhr) => {
-            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-          },
-          (error) => {
-            console.error('GLTFLoader : ', error)
-          },
-        )
-      })
-
-    await Promise.all(Object.values(Characters).map((name) => loadPromise(name)))
   }
 }
 
@@ -343,4 +294,13 @@ class LandingJumpState extends CharacterState {
     this.elapsedTime += dt
     if (this.elapsedTime > this.duration) this.machine.setState('idle')
   }
+}
+
+// Assets source : https://kaylousberg.com/game-assets
+export enum Characters {
+  Knight = 'Knight',
+  // Barbarian = 'Barbarian',
+  // Mage = 'Mage',
+  // Rogue = 'Rogue',
+  // Rogue_Hooded = 'Rogue_Hooded',
 }

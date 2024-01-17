@@ -1,11 +1,11 @@
 import * as CANNON from 'cannon-es'
+import { Character, Characters } from './character'
 import { OrbitControls } from './controls/orbit_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
 import { Coins } from './game/coins'
 import { GameMap } from './game/game_map'
 import { Score } from './game/score'
-import { Character, Characters } from './props/character'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
@@ -97,7 +97,7 @@ class LoadingState extends GameState {
 
   enter() {
     this.machine.game.init()
-    this.machine.game.engine.loadModels().then(() => {
+    this.machine.game.engine.load().then(() => {
       this.machine.game.map.generate()
       this.machine.game.initCharacter()
 
