@@ -4,7 +4,7 @@
 This game is about gathering coins and cleaning the dungeon from the monsters that live in it as fast as possible !
 
 ## Credits
-- [KayKit](https://kaylousberg.itch.io/) for the game assets
+- [Kay Lousberg](https://kaylousberg.itch.io/) for the game assets
 
 ## TODOS
 This is a work in progress, the following list is not exhaustive and is subject to change
