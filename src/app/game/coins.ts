@@ -1,4 +1,3 @@
-import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Game } from '../game'
 import { Mapping, Mappings } from '../mapping'
@@ -28,16 +27,11 @@ export class Coins {
     }
 
     for (const coin of this.coins) {
-      let velocity = new CANNON.Vec3(0, 0, -1)
-      velocity = velocity.scale(dt * 7)
-      coin.body.position.copy(coin.body.position.clone().vadd(velocity))
-
-      if (coin.body.position.z < this.unspawnZ) this.removeCoin(coin)
-      if (this.game.character.hitbox.containsPoint(coin.body.position as unknown as THREE.Vector3)) {
+      const position = coin.body.translation()
+      if (position.z < this.unspawnZ) this.removeCoin(coin)
+      else if (this.game.character.hitbox.containsPoint(coin.body.translation() as unknown as THREE.Vector3))
         this.gather(coin)
-      }
-
-      coin.update()
+      else coin.update()
     }
   }
 
@@ -58,15 +52,19 @@ export class Coins {
 
   private generateCoin() {
     const randomCoin = Math.floor(Math.random() * Coins.MappingNames.length)
-    this.coins.push(
-      new Mapping({
-        engine: this.game.engine,
-        name: Coins.MappingNames[randomCoin],
-        type: CANNON.Body.KINEMATIC,
-        position: { x: this.spawnX(), y: this.spawnY(), z: this.spawnZ },
-        manualUpdate: true,
-      }),
-    )
+
+    const coin = new Mapping({
+      engine: this.game.engine,
+      name: Coins.MappingNames[randomCoin],
+      position: { x: this.spawnX(), y: this.spawnY(), z: this.spawnZ },
+      bodyType: 'kinematic',
+      shape: 'box',
+      manualUpdate: true,
+    })
+
+    coin.body.setLinvel({ x: 0, y: 0, z: -7 }, true)
+
+    this.coins.push(coin)
   }
 
   private removeCoin(coin: Mapping) {

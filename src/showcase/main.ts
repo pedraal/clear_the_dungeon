@@ -7,5 +7,5 @@ new Showcase({
     debugUi: true,
     physicsDebugger: PhysicDebuggerModes.On,
   },
-  sphere: true,
+  fallingItems: true,
 })

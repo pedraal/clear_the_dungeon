@@ -1,4 +1,3 @@
-import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Character } from '../character'
 import { Engine } from '../engine'
@@ -31,7 +30,8 @@ export class ThirdPersonControls extends BaseKeyboardControls {
 
   assignTarget(target: Character) {
     this.target = target
-    this.quaternion = this.target.body.quaternion.clone()
+    const rotation = this.target.body.rotation()
+    this.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w)
     this.updateCamera()
   }
 
@@ -102,8 +102,8 @@ export class ThirdPersonControls extends BaseKeyboardControls {
 
     const rotationSensitivity = 0.003
 
-    this.quaternion = this.quaternion.mult(
-      new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -deltaX * rotationSensitivity),
+    this.quaternion = this.quaternion.multiply(
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * rotationSensitivity),
     )
   }
 }

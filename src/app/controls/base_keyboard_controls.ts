@@ -1,4 +1,3 @@
-import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { Character } from '../character'
 import { Engine } from '../engine'
@@ -17,17 +16,15 @@ export class BaseKeyboardControls {
   left: boolean
   right: boolean
   jump: boolean
-  velocity: CANNON.Vec3
-  quaternion: CANNON.Quaternion
+  velocity: THREE.Vector3
+  quaternion: THREE.Quaternion
 
   constructor(params: Params) {
     this.params = params
     this.engine = this.params.engine
     this.camera = this.engine.camera
-
-    this.velocity = new CANNON.Vec3(0, 0, 0)
-    this.quaternion = new CANNON.Quaternion()
-
+    this.velocity = new THREE.Vector3()
+    this.quaternion = new THREE.Quaternion()
     this.forward = false
     this.backward = false
     this.left = false

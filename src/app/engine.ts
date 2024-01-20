@@ -1,11 +1,11 @@
-import * as CANNON from 'cannon-es'
+import RAPIER from '@dimforge/rapier3d/rapier'
 import GUI from 'lil-gui'
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import CannonDebugRenderer from '../../vendor/cannon_debug_renderer'
 import { Character } from './character'
 import { Mapping } from './mapping'
 import { Updatable } from './types'
+import { RapierDebugRenderer } from './utils/rapier_debug_renderer'
 
 export enum PhysicDebuggerModes {
   Off = 0,
@@ -26,14 +26,14 @@ export class Engine {
   scene: THREE.Scene
   params: Params
   clock: THREE.Clock
-  world: CANNON.World
-  defaultMaterial: CANNON.Material
-  physicsDebugger?: CannonDebugRenderer
+  world: RAPIER.World
+  physicsDebugger?: RapierDebugRenderer
   gui: GUI
   stats: Stats
   previousElapsedTime: number
   updatables: Updatable[]
   camera: THREE.PerspectiveCamera
+  rapier: typeof RAPIER
 
   constructor(params: Params) {
     this.params = params
@@ -53,21 +53,6 @@ export class Engine {
     this.clock = new THREE.Clock()
     this.previousElapsedTime = 0
 
-    this.world = new CANNON.World()
-    this.world.gravity.set(0, -9.82, 0)
-    const broadphase = new CANNON.SAPBroadphase(this.world)
-    this.world.broadphase = broadphase
-    this.world.allowSleep = true
-    this.defaultMaterial = new CANNON.Material('default')
-    this.world.addContactMaterial(
-      new CANNON.ContactMaterial(this.defaultMaterial, this.defaultMaterial, {
-        friction: 0.1,
-        restitution: 0,
-      }),
-    )
-    if (this.params.physicsDebugger !== PhysicDebuggerModes.Off)
-      this.physicsDebugger = new CannonDebugRenderer(this.scene, this.world)
-
     if (this.params.debugUi) {
       this.gui = new GUI()
       this.stats = new Stats()
@@ -84,26 +69,20 @@ export class Engine {
   }
 
   load() {
-    return Promise.all([Character.load(), Mapping.load()])
+    return Promise.all([Character.load(), Mapping.load(), this.loadRapier()])
   }
 
-  private initGlobalHelpers() {
-    if (this.params.gridHelper) {
-      const gridHelper = new THREE.GridHelper(100, 100)
-      this.scene.add(gridHelper)
-    }
-
-    if (this.params.axesHelper) {
-      const axesHelper = new THREE.AxesHelper(10)
-      this.scene.add(axesHelper)
-    }
+  async loadRapier() {
+    this.rapier = await import('@dimforge/rapier3d')
   }
 
-  private initDebugUi() {
-    if (!this.params.debugUi) return
-    this.gui = new GUI()
-    this.stats = new Stats()
-    document.body.appendChild(this.stats.dom)
+  init() {
+    this.initPhysics()
+  }
+
+  initPhysics() {
+    this.world = new this.rapier.World({ x: 0, y: -9.81, z: 0 })
+    if (this.params.physicsDebugger !== PhysicDebuggerModes.Off) this.physicsDebugger = new RapierDebugRenderer(this)
   }
 
   private onResize() {
@@ -119,7 +98,7 @@ export class Engine {
     const deltaTime = elapsedTime - this.previousElapsedTime
     this.previousElapsedTime = elapsedTime
 
-    this.updatePhysics(deltaTime)
+    this.updatePhysics()
     this.updateRenderer(deltaTime, elapsedTime)
     this.updateDebugUi()
 
@@ -128,8 +107,8 @@ export class Engine {
     window.requestAnimationFrame(() => this.tick(update))
   }
 
-  private updatePhysics(deltaTime: number) {
-    this.world.step(1 / 60, deltaTime, 1000)
+  private updatePhysics() {
+    this.world.step()
     this.physicsDebugger?.update()
   }
 

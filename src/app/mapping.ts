@@ -1,8 +1,7 @@
-import * as CANNON from 'cannon-es'
+import RAPIER from '@dimforge/rapier3d/rapier'
+import * as THREE from 'three'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import SbcodeCannonUtils from './../../vendor/cannon_utils'
 import { Engine, PhysicDebuggerModes } from './engine'
-import { CannonUtils } from './utils/cannon_utils'
 import { GenericModel } from './utils/generic_model'
 import { GLTFUtils } from './utils/gltf_utils'
 
@@ -11,18 +10,20 @@ interface Params {
   name: Mappings
   position: { x: number; y: number; z: number }
   orientation?: number
-  mass?: number
-  type?: CANNON.BodyType
-  shapeAlgorithm?: 'convex' | 'convex-deprecated' | 'sbcode-convex' | 'sbcode-trimesh' | 'box' | 'sphere'
   manualUpdate?: boolean
+  bodyType?: 'dynamic' | 'fixed' | 'kinematic'
+  shape?: 'box' | 'sphere' | 'trimesh' | 'convex'
 }
 
 export class Mapping extends GenericModel {
   params: Params
   engine: Engine
   mesh: THREE.Mesh
-  body: CANNON.Body
-  shapeAlgorithm: Params['shapeAlgorithm']
+  body: RAPIER.RigidBody
+  collider: RAPIER.Collider
+  shape: Params['shape']
+  boundingBox: THREE.Box3
+  boundingSphere: THREE.Sphere
 
   constructor(params: Params) {
     super(params)
@@ -31,48 +32,89 @@ export class Mapping extends GenericModel {
 
     this.model = GLTFUtils.cloneGltf(Mapping.gltfs[this.params.name]) as GLTF
 
-    this.mesh = this.model.scene.children[0] as THREE.Mesh
+    this.mesh = this.model.scene.children[0].clone(true) as THREE.Mesh
     this.mesh.receiveShadow = true
-    this.mesh.position.copy(this.params.position as THREE.Vector3)
     this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
+    this.mesh.geometry = this.mesh.geometry.clone()
+    this.mesh.geometry.computeBoundingBox()
+    this.mesh.geometry.computeBoundingSphere()
+    this.boundingBox = this.mesh.geometry.boundingBox as THREE.Box3
+    this.boundingSphere = this.mesh.geometry.boundingSphere as THREE.Sphere
 
-    this.shapeAlgorithm = this.params.shapeAlgorithm || 'box'
-    this.body = new CANNON.Body({
-      mass: this.params.mass || 0,
-      type: this.params.type || this.params.mass ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC,
-      shape: this.cannonShape,
-      material: this.engine.defaultMaterial,
-    })
-    const bodyPosition = new CANNON.Vec3()
-    bodyPosition.copy(this.params.position as unknown as CANNON.Vec3)
-    this.body.position.copy(bodyPosition)
-    this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
+    this.shape = this.params.shape || 'box'
+    if (['box', 'sphere'].includes(this.shape)) {
+      this.mesh.geometry.center()
+    } else {
+      this.mesh.geometry.translate(0, -this.boundingBox.min.y, 0)
+    }
+
+    let bodyDesc: RAPIER.RigidBodyDesc
+    switch (this.params.bodyType) {
+      case 'dynamic':
+        bodyDesc = this.engine.rapier.RigidBodyDesc.dynamic()
+        break
+      case 'fixed':
+        bodyDesc = this.engine.rapier.RigidBodyDesc.fixed()
+        break
+      case 'kinematic':
+        bodyDesc = this.engine.rapier.RigidBodyDesc.kinematicVelocityBased()
+        break
+      default:
+        bodyDesc = this.engine.rapier.RigidBodyDesc.fixed()
+        break
+    }
+
+    bodyDesc
+      .setTranslation(this.params.position.x, this.params.position.y, this.params.position.z)
+      .setRotation(this.mesh.quaternion)
+
+    this.body = this.engine.world.createRigidBody(bodyDesc)
+    const colliderDesc = new this.engine.rapier.ColliderDesc(this.colliderShape)
+
+    if (this.shape === 'trimesh') {
+      const center = this.boundingBox.getCenter(new THREE.Vector3())
+      colliderDesc.setMassProperties(
+        1,
+        { x: center.x, y: center.y, z: center.z },
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: 0, w: 1 },
+      )
+    }
+
+    if (!colliderDesc) throw new Error(`No colliderDesc for ${this.params.name}`)
+    this.collider = this.engine.world.createCollider(colliderDesc, this.body)
 
     if (this.engine.params.physicsDebugger !== PhysicDebuggerModes.Strict) this.engine.scene.add(this.mesh)
-    this.engine.world.addBody(this.body)
     if (!this.params.manualUpdate) this.engine.updatables.push(this)
   }
 
-  update() {
-    this.mesh.position.copy(this.body.position.clone() as unknown as THREE.Vector3)
-    this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
+  get colliderShape() {
+    if (this.params.shape === 'box')
+      return new this.engine.rapier.Cuboid(
+        ...(this.boundingBox.getSize(new THREE.Vector3()).divideScalar(2).toArray() as [number, number, number]),
+      )
+    else if (this.params.shape === 'sphere') return new this.engine.rapier.Ball(this.boundingSphere.radius)
+    else if (this.params.shape === 'trimesh')
+      return new this.engine.rapier.TriMesh(
+        new Float32Array(this.mesh.geometry.attributes.position.array),
+        new Uint32Array(this.mesh.geometry.index?.array || []),
+      )
+    else if (this.params.shape === 'convex')
+      return new this.engine.rapier.ConvexPolyhedron(new Float32Array(this.mesh.geometry.attributes.position.array))
+    else
+      return new this.engine.rapier.Cuboid(
+        ...(this.boundingBox.getSize(new THREE.Vector3()).divideScalar(2).toArray() as [number, number, number]),
+      )
   }
 
-  get cannonShape() {
-    if (this.shapeAlgorithm === 'convex') return CannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'convex-deprecated')
-      return CannonUtils.CreateConvexPolyhedronFromDeprecatedGeometry(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sbcode-convex')
-      return SbcodeCannonUtils.CreateConvexPolyhedron(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sbcode-trimesh') return SbcodeCannonUtils.CreateTrimesh(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'box') return CannonUtils.CreateBox(this.mesh.geometry)
-    else if (this.shapeAlgorithm === 'sphere') return CannonUtils.CreateSphere(this.mesh.geometry)
-    else return CannonUtils.CreateBox(this.mesh.geometry)
+  update() {
+    this.mesh.position.copy(this.body.translation() as unknown as THREE.Vector3)
+    this.mesh.quaternion.copy(this.body.rotation() as unknown as THREE.Quaternion)
   }
 
   remove() {
     this.engine.updatables = this.engine.updatables.filter((u) => u !== this)
-    this.engine.world.removeBody(this.body)
+    this.engine.world.removeRigidBody(this.body)
     this.engine.scene.remove(this.mesh)
   }
 
