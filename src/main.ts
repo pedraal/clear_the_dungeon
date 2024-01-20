@@ -5,7 +5,7 @@ import { Game } from './app/game'
 new Game({
   engine: {
     debugUi: import.meta.env.DEV,
-    physicsDebugger: PhysicDebuggerModes.Off,
+    physicsDebugger: import.meta.env.DEV ? PhysicDebuggerModes.On : PhysicDebuggerModes.Off,
   },
   controls: 'tps',
 })

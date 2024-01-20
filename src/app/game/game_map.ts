@@ -1,5 +1,5 @@
 import { Engine } from '../engine'
-import { Mapping, Mappings } from '../props/mapping'
+import { Mapping, Mappings } from '../mapping'
 
 export class GameMap {
   cellSide = 4
@@ -13,7 +13,7 @@ export class GameMap {
     this.engine = engine
     this.spawn = {
       x: 5 * this.cellSide,
-      y: 0.1,
+      y: 1,
       z: 2 * this.cellSide,
     }
     this.initDefinition()
@@ -32,7 +32,7 @@ export class GameMap {
   generate() {
     for (let x = this.xBoundings[0]; x <= this.xBoundings[1]; x++) {
       for (let z = this.zBoundings[0]; z <= this.zBoundings[1]; z++) {
-        this.pushProp(x, -0.5, z, (x, y, z) => {
+        this.pushProp(x, -0.3, z, (x, y, z) => {
           return new Mapping({
             engine: this.engine,
             name: Mappings.Floor_Dirt,
@@ -42,32 +42,53 @@ export class GameMap {
       }
     }
 
-    // this.pushProp(7, 0, 4, (x, y, z) => {
-    //   return new Mapping({
-    //     engine: this.engine,
-    //     name: Mappings.target_stand_A,
-    //     orientation: 1,
-    //     position: { y, ...this.convertMapPosition(x, z) },
-    //     shapeAlgorithm: 'sbcode-trimesh',
-    //   })
-    // })
+    this.pushProp(6, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.target_stand_A,
+        orientation: 1,
+        shape: 'trimesh',
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
 
-    // this.pushProp(6, 0, 4, (x, y, z) => {
-    //   return new Mapping({
-    //     engine: this.engine,
-    //     name: Mappings.Cube_Prototype_Small,
-    //     shapeAlgorithm: 'sphere',
-    //     position: { y, ...this.convertMapPosition(x, z) },
-    //   })
-    // })
+    this.pushProp(5, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Cube_Prototype_Small,
+        shape: 'trimesh',
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
 
-    // this.pushProp(5, 0, 4, (x, y, z) => {
-    //   return new Mapping({
-    //     engine: this.engine,
-    //     name: Mappings.Cube_Prototype_Large_A,
-    //     position: { y, ...this.convertMapPosition(x, z) },
-    //   })
-    // })
+    this.pushProp(4, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Cube_Prototype_Large_A,
+        shape: 'trimesh',
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
+
+    this.pushProp(3, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Primitive_Slope,
+        shape: 'trimesh',
+        orientation: 0.5,
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
+
+    this.pushProp(2, 0, 4, (x, y, z) => {
+      return new Mapping({
+        engine: this.engine,
+        name: Mappings.Primitive_Stairs,
+        shape: 'convex',
+        orientation: 0.5,
+        position: { y, ...this.convertMapPosition(x, z) },
+      })
+    })
   }
 
   pushProp(x: number, y: number, z: number, block: (x: number, y: number, z: number) => Mapping) {

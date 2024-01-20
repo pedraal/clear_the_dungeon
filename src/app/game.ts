@@ -1,23 +1,22 @@
-import * as CANNON from 'cannon-es'
-import { OrbitControls } from './controls/orbit_controls'
+import { Character, Characters } from './character'
+import { MapControls } from './controls/map_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
 import { Coins } from './game/coins'
 import { GameMap } from './game/game_map'
 import { Score } from './game/score'
-import { Character, Characters } from './props/character'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine?: EngineParams
-  controls: 'tps' | 'orbit'
+  controls: 'tps' | 'map'
 }
 
 export class Game {
   params: Params
   engine: Engine
   stateMachine: GameStateMachine
-  controls: ThirdPersonControls | OrbitControls
+  controls: ThirdPersonControls | MapControls
   map: GameMap
   character: Character
   score: Score
@@ -40,7 +39,7 @@ export class Game {
       this.controls = new ThirdPersonControls({
         engine: this.engine,
       })
-    else if (this.params.controls === 'orbit') this.controls = new OrbitControls({ engine: this.engine })
+    else if (this.params.controls === 'map') this.controls = new MapControls({ engine: this.engine })
   }
 
   private initMap() {
@@ -97,7 +96,8 @@ class LoadingState extends GameState {
 
   enter() {
     this.machine.game.init()
-    this.machine.game.engine.loadModels().then(() => {
+    this.machine.game.engine.load().then(() => {
+      this.machine.game.engine.init()
       this.machine.game.map.generate()
       this.machine.game.initCharacter()
 
@@ -140,7 +140,7 @@ class IdleState extends GameState {
 
 class PlayingState extends GameState {
   name = 'playing'
-  duration = 60
+  duration = 6000
   coins: Coins
 
   enter() {
@@ -148,8 +148,11 @@ class PlayingState extends GameState {
     if (this.machine.game.controls instanceof ThirdPersonControls) {
       this.machine.game.controls.enable()
     }
-    this.machine.game.character.setBodyPosition(this.machine.game.map.spawn as CANNON.Vec3)
-    this.coins = new Coins(this.machine.game)
+    this.machine.game.character.body.setTranslation(
+      { ...this.machine.game.map.spawn, y: this.machine.game.map.spawn.y + this.machine.game.character.yHalfExtend },
+      true,
+    )
+    // this.coins = new Coins(this.machine.game)
     if (this.playingUiEl) this.playingUiEl.style.display = 'block'
   }
 
@@ -163,7 +166,7 @@ class PlayingState extends GameState {
   }
 
   exit() {
-    this.coins.remove()
+    // this.coins.remove()
     if (this.playingUiEl) this.playingUiEl.style.display = 'none'
   }
 

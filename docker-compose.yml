@@ -16,14 +16,14 @@ services:
       - traefik.http.services.3d-game.loadbalancer.server.port=80
 
       - traefik.http.routers.3d-game.service=3d-game@docker
-      - traefik.http.routers.3d-game.rule=Host(`game.pedraal.fr`)
+      - traefik.http.routers.3d-game.rule=Host(`${APP_DOMAIN}`)
       - traefik.http.routers.3d-game.entrypoints=web
       - traefik.http.routers.3d-game.middlewares=redirect-https
 
       - traefik.http.routers.3d-game-secured.service=3d-game@docker
       - traefik.http.routers.3d-game-secured.entrypoints=web-secured
       - traefik.http.routers.3d-game-secured.tls=true
-      - traefik.http.routers.3d-game-secured.rule=Host(`game.pedraal.fr`)
+      - traefik.http.routers.3d-game-secured.rule=Host(`${APP_DOMAIN}`)
 
 networks:
   proxy:

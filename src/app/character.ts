@@ -1,11 +1,11 @@
-import * as CANNON from 'cannon-es'
+import RAPIER from '@dimforge/rapier3d/rapier'
 import * as THREE from 'three'
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { Engine, PhysicDebuggerModes } from '../engine'
-import { Controls } from '../types'
-import { CannonUtils } from '../utils/cannon_utils'
-import { GLTFUtils } from '../utils/gltf_utils'
-import { State, StateMachine } from '../utils/state_machine'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { Engine, PhysicDebuggerModes } from './engine'
+import { Controls } from './types'
+import { GenericModel } from './utils/generic_model'
+import { GLTFUtils } from './utils/gltf_utils'
+import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine: Engine
@@ -15,33 +15,66 @@ interface Params {
   controls?: Controls
 }
 
-export enum Characters {
-  Knight = 'Knight',
-  // Barbarian = 'Barbarian',
-  // Mage = 'Mage',
-  // Rogue = 'Rogue',
-  // Rogue_Hooded = 'Rogue_Hooded',
-}
-
-export class Character {
+export class Character extends GenericModel {
   params: Params
   engine: Engine
   mesh: THREE.Group
   mixer: THREE.AnimationMixer
-  model: GLTF
-  body: CANNON.Body
+  body: RAPIER.RigidBody
+  collider: RAPIER.Collider
   controls: Controls | undefined
+  kinematicController: RAPIER.KinematicCharacterController
   stateMachine: CharacterStateMachine
   yHalfExtend: number
+  fallingVelocity: number
 
   constructor(params: Params) {
+    super(params)
     this.params = params
     this.engine = this.params.engine
-    this.initModel()
-    this.initPhysics()
-    this.initEquipement()
-    this.initAnimations()
-    this.initControls()
+
+    this.model = GLTFUtils.cloneGltf(Character.gltfs[this.params.name]) as GLTF
+
+    this.mesh = this.model.scene
+    this.mesh.receiveShadow = true
+    this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
+
+    this.yHalfExtend = this.hitbox.getSize(new THREE.Vector3()).y / 2
+
+    this.body = this.engine.world.createRigidBody(
+      this.engine.rapier.RigidBodyDesc.kinematicPositionBased().setTranslation(
+        this.params.position.x,
+        this.params.position.y + this.yHalfExtend,
+        this.params.position.z,
+      ),
+    )
+
+    this.collider = this.engine.world.createCollider(
+      this.engine.rapier.ColliderDesc.capsule(this.yHalfExtend - 0.5, 0.5),
+      this.body,
+    )
+
+    this.kinematicController = this.engine.world.createCharacterController(0.1)
+    this.kinematicController.enableAutostep(0.7, 0.1, true)
+    this.kinematicController.enableSnapToGround(0.1)
+    this.kinematicController.setSlideEnabled(false)
+
+    this.fallingVelocity = -5
+
+    this.mesh.traverse((node) => {
+      if (node instanceof THREE.Bone && node.name === 'handslotl') {
+        node.children = node.children.splice(1, 1)
+      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
+        node.children = node.children.splice(0, 1)
+      }
+    })
+
+    this.mixer = new THREE.AnimationMixer(this.mesh)
+
+    this.controls = this.params.controls
+    if (this.controls) {
+      this.controls.assignTarget(this)
+    }
 
     this.stateMachine = new CharacterStateMachine(this)
     this.stateMachine.setState('idle')
@@ -50,86 +83,46 @@ export class Character {
     this.engine.updatables.push(this)
   }
 
-  private initModel() {
-    this.model = GLTFUtils.cloneGltf(Character.gltfs[this.params.name]) as GLTF
-    this.mesh = this.model.scene
-    this.mesh.receiveShadow = true
-
-    this.mesh.position.copy(this.params.position as THREE.Vector3)
-    this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
-  }
-
-  private initPhysics() {
-    this.yHalfExtend = this.hitbox.getSize(new THREE.Vector3()).y / 2
-    this.body = new CANNON.Body({
-      mass: 0,
-      type: CANNON.Body.KINEMATIC,
-      shape: new CANNON.Box(new CANNON.Vec3(0.7, this.yHalfExtend, 0.7)),
-      material: this.engine.defaultMaterial,
-    })
-    this.setBodyPosition(this.mesh.position.clone() as unknown as CANNON.Vec3)
-    this.body.quaternion.copy(this.mesh.quaternion as unknown as CANNON.Quaternion)
-    this.engine.world.addBody(this.body)
-  }
-
-  private initAnimations() {
-    this.mixer = new THREE.AnimationMixer(this.mesh)
-  }
-
-  private initControls() {
-    this.controls = this.params.controls
-    if (this.controls) {
-      this.controls.assignTarget(this)
-    }
-  }
-
-  private initEquipement() {
-    let left: THREE.Bone | undefined
-    let right: THREE.Bone | undefined
-
-    this.mesh.traverse((node) => {
-      if (node instanceof THREE.Bone && node.name === 'handslotl') {
-        left = node
-      } else if (node instanceof THREE.Bone && node.name === 'handslotr') {
-        right = node
-      }
-    })
-
-    if (left) {
-      left.children = left.children.splice(1, 1)
-    }
-    if (right) {
-      right.children = right.children.splice(0, 1)
-    }
-  }
-
   update(dt: number, elapsedTime: number) {
     this.mixer.update(dt)
     this.handleMovement(dt)
     this.stateMachine.currentState?.update(dt, elapsedTime)
+
+    this.mesh.position.copy(this.body.translation() as unknown as THREE.Vector3)
+    this.mesh.position.y -= this.yHalfExtend
+    this.mesh.quaternion.copy(this.body.rotation() as unknown as THREE.Quaternion)
+
     this.controls?.updateCamera()
   }
 
   private handleMovement(dt: number) {
     if (!this.controls) return
 
-    this.body.quaternion.copy(this.body.quaternion.slerp(this.controls.quaternion, 0.05))
-    this.mesh.quaternion.copy(this.body.quaternion as unknown as THREE.Quaternion)
+    this.body.setRotation(this.controls.quaternion as unknown as RAPIER.Rotation, true)
 
-    let velocity = this.controls.velocity.clone()
-    velocity = CannonUtils.ApplyQuaternionToVec3(velocity, this.body.quaternion)
-    velocity = velocity.scale(6 * dt)
-    velocity.y = 0 // vertical movement is handled by the jump animation
+    let velocity: THREE.Vector3
+    if (this.stateMachine.currentState instanceof JumpingState) {
+      velocity = this.stateMachine.currentState.velocity.clone()
+    } else {
+      velocity = this.getControlsVelocity()
+      velocity.y = this.fallingVelocity
+    }
 
-    this.body.position.copy(this.body.position.clone().vadd(velocity))
+    velocity.multiplyScalar(6 * dt)
 
-    this.mesh.position.copy(this.body.position as unknown as THREE.Vector3)
-    this.mesh.position.y -= this.yHalfExtend
+    this.kinematicController.computeColliderMovement(this.collider, velocity)
+
+    const movement = this.kinematicController.computedMovement()
+    const newPos = this.body.translation()
+    newPos.x += movement.x
+    newPos.y += movement.y
+    newPos.z += movement.z
+    this.body.setNextKinematicTranslation(newPos)
   }
 
-  setBodyPosition(position: CANNON.Vec3) {
-    this.body.position.copy(position as unknown as CANNON.Vec3)
-    this.body.position.y += this.yHalfExtend
+  getControlsVelocity() {
+    if (!this.controls) return new THREE.Vector3()
+    else return this.controls.velocity.clone().applyQuaternion(this.controls.quaternion)
   }
 
   getAnimation(name: string) {
@@ -140,27 +133,8 @@ export class Character {
     return new THREE.Box3().setFromObject(this.mesh)
   }
 
-  static gltfs: Record<string, GLTF> = {}
-  static loader = new GLTFLoader()
   static async load() {
-    const loadPromise = (name: string): Promise<void> =>
-      new Promise((resolve) => {
-        Character.loader.load(
-          `/gltf/characters/${name}.glb`,
-          (model) => {
-            Character.gltfs[name] = model
-            resolve()
-          },
-          (xhr) => {
-            // console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-          },
-          (error) => {
-            console.error('GLTFLoader : ', error)
-          },
-        )
-      })
-
-    await Promise.all(Object.values(Characters).map((name) => loadPromise(name)))
+    return GenericModel.load('characters', 'glb', Object.values(Characters))
   }
 }
 
@@ -244,6 +218,69 @@ class IdleState extends CharacterState {
   }
 }
 
+class StartingJumpState extends CharacterState {
+  name = 'starting_jump'
+  animation = 'Jump_Start'
+  loop = THREE.LoopOnce
+
+  transitionTime = 0.1
+  elapsedTime = 0
+  duration = 0.2
+
+  update(dt: number) {
+    this.elapsedTime += dt
+    if (this.elapsedTime > this.duration) this.machine.setState('jumping')
+  }
+}
+
+class JumpingState extends CharacterState {
+  name = 'jumping'
+  animation = 'Jump_Idle'
+
+  transitionTime = 0.1
+  persistedVelocity = { x: 0, y: 0, z: 0 }
+  initialVerticalVelocity = 3
+  rawDecelerationRate = 0.12
+  deceleleration = 0
+  velocity = new THREE.Vector3()
+
+  enter(prevState?: CharacterState) {
+    super.enter(prevState)
+    this.persistedVelocity = this.machine.character.getControlsVelocity().multiplyScalar(1.25)
+  }
+
+  update() {
+    const yVelocity = Math.max(
+      this.initialVerticalVelocity - this.deceleleration,
+      this.machine.character.fallingVelocity,
+    )
+    this.velocity.copy(new THREE.Vector3(this.persistedVelocity.x, yVelocity, this.persistedVelocity.z))
+
+    this.machine.character.kinematicController.computeColliderMovement(this.machine.character.collider, this.velocity)
+    const collision = this.machine.character.kinematicController.computedCollision(0)
+    if (collision?.translationApplied.y === 0) {
+      this.machine.setState('landing_jump')
+    }
+
+    this.deceleleration += this.rawDecelerationRate
+  }
+}
+
+class LandingJumpState extends CharacterState {
+  name = 'landing_jump'
+  animation = 'Jump_Land'
+
+  enterTime = 0.2
+  elapsedTime = 0
+  transitionTime = 0.1
+  duration = 0.1
+
+  update(dt: number) {
+    this.elapsedTime += dt
+    if (this.elapsedTime > this.duration) this.machine.setState('idle')
+  }
+}
+
 class RunningState extends CharacterState {
   name = 'running'
   animation = 'Running_A'
@@ -295,52 +332,11 @@ class WalkingBackwardState extends CharacterState {
   }
 }
 
-class StartingJumpState extends CharacterState {
-  name = 'starting_jump'
-  animation = 'Jump_Start'
-  loop = THREE.LoopOnce
-
-  transitionTime = 0.1
-  elapsedTime = 0
-  duration = 0.2
-
-  update(dt: number) {
-    this.elapsedTime += dt
-    if (this.elapsedTime > this.duration) this.machine.setState('jumping')
-  }
-}
-
-class JumpingState extends CharacterState {
-  name = 'jumping'
-  animation = 'Jump_Idle'
-
-  elapsedTime = 0
-  duration = 0.7
-  transitionTime = 0.1
-  halfDuration = this.duration / 2
-
-  update(dt: number) {
-    this.elapsedTime += dt
-    if (this.elapsedTime > this.duration) this.machine.setState('landing_jump')
-    else {
-      const t = this.elapsedTime / this.halfDuration
-      const value = Math.sin((t * Math.PI) / 2)
-      this.machine.character.body.position.y = value * 2.2 + this.machine.character.yHalfExtend
-    }
-  }
-}
-
-class LandingJumpState extends CharacterState {
-  name = 'landing_jump'
-  animation = 'Jump_Land'
-
-  enterTime = 0.2
-  elapsedTime = 0
-  transitionTime = 0.1
-  duration = 0.1
-
-  update(dt: number) {
-    this.elapsedTime += dt
-    if (this.elapsedTime > this.duration) this.machine.setState('idle')
-  }
+// Assets source : https://kaylousberg.com/game-assets
+export enum Characters {
+  Knight = 'Knight',
+  // Barbarian = 'Barbarian',
+  // Mage = 'Mage',
+  // Rogue = 'Rogue',
+  // Rogue_Hooded = 'Rogue_Hooded',
 }
