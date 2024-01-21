@@ -24,6 +24,7 @@ export class Showcase {
     this.params = params
     this.engine = new Engine(this.params.engine || {})
     this.controls = new MapControls({ engine: this.engine })
+    this.engine.camera.position.set(0, 15, 20)
     this.stateMachine = new ShowcaseStateMachine(this)
     this.stateMachine.setState('loading')
   }
