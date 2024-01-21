@@ -33,6 +33,9 @@ export class Mapping extends GenericModel {
     this.model = GLTFUtils.cloneGltf(Mapping.gltfs[this.params.name]) as GLTF
 
     this.mesh = this.model.scene.children[0].clone(true) as THREE.Mesh
+    if (this.mesh.material instanceof THREE.Material) {
+      this.mesh.material.transparent = true
+    }
     this.mesh.receiveShadow = true
     this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
     this.mesh.geometry = this.mesh.geometry.clone()
