@@ -240,7 +240,7 @@ class JumpingState extends CharacterState {
   transitionTime = 0.1
   persistedVelocity = { x: 0, y: 0, z: 0 }
   initialVerticalVelocity = 3
-  rawDecelerationRate = 0.12
+  rawDecelerationRate = 10
   deceleleration = 0
   velocity = new THREE.Vector3()
 
@@ -249,7 +249,7 @@ class JumpingState extends CharacterState {
     this.persistedVelocity = this.machine.character.getControlsVelocity().multiplyScalar(1.25)
   }
 
-  update() {
+  update(dt) {
     const yVelocity = Math.max(
       this.initialVerticalVelocity - this.deceleleration,
       this.machine.character.fallingVelocity,
@@ -262,7 +262,7 @@ class JumpingState extends CharacterState {
       this.machine.setState('landing_jump')
     }
 
-    this.deceleleration += this.rawDecelerationRate
+    this.deceleleration += this.rawDecelerationRate * dt
   }
 }
 
