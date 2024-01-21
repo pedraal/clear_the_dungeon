@@ -12,9 +12,9 @@ export class GameMap {
   constructor(engine: Engine) {
     this.engine = engine
     this.spawn = {
-      x: 5 * this.cellSide,
+      x: 0 * this.cellSide,
       y: 1,
-      z: 2 * this.cellSide,
+      z: 0 * this.cellSide,
     }
     this.initDefinition()
   }
@@ -30,62 +30,10 @@ export class GameMap {
   }
 
   generate() {
-    for (let x = this.xBoundings[0]; x <= this.xBoundings[1]; x++) {
-      for (let z = this.zBoundings[0]; z <= this.zBoundings[1]; z++) {
-        this.pushProp(x, -0.3, z, (x, y, z) => {
-          return new Mapping({
-            engine: this.engine,
-            name: Mappings.Floor_Dirt,
-            position: { y, ...this.convertMapPosition(x, z) },
-          })
-        })
-      }
-    }
-
-    this.pushProp(6, 0, 4, (x, y, z) => {
+    this.pushProp(0, 0, 0, (x, y, z) => {
       return new Mapping({
         engine: this.engine,
-        name: Mappings.target_stand_A,
-        orientation: 1,
-        shape: 'trimesh',
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
-
-    this.pushProp(5, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Cube_Prototype_Small,
-        shape: 'trimesh',
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
-
-    this.pushProp(4, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Cube_Prototype_Large_A,
-        shape: 'trimesh',
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
-
-    this.pushProp(3, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Primitive_Slope,
-        shape: 'trimesh',
-        orientation: 0.5,
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
-    })
-
-    this.pushProp(2, 0, 4, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.Primitive_Stairs,
-        shape: 'convex',
-        orientation: 0.5,
+        name: Mappings.floor_dirt_large,
         position: { y, ...this.convertMapPosition(x, z) },
       })
     })
