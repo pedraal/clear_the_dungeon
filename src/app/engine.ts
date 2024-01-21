@@ -1,5 +1,4 @@
 import RAPIER from '@dimforge/rapier3d/rapier'
-import GUI from 'lil-gui'
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { Character } from './character'
@@ -28,7 +27,6 @@ export class Engine {
   clock: THREE.Clock
   world: RAPIER.World
   physicsDebugger?: RapierDebugRenderer
-  gui: GUI
   stats: Stats
   previousElapsedTime: number
   updatables: Updatable[]
@@ -54,7 +52,6 @@ export class Engine {
     this.previousElapsedTime = 0
 
     if (this.params.debugUi) {
-      this.gui = new GUI()
       this.stats = new Stats()
       document.body.appendChild(this.stats.dom)
     }
