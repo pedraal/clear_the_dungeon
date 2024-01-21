@@ -7,5 +7,5 @@ new Game({
     debugUi: import.meta.env.DEV,
     physicsDebugger: import.meta.env.DEV ? PhysicDebuggerModes.On : PhysicDebuggerModes.Off,
   },
-  controls: 'tps',
+  controls: 'map',
 })
