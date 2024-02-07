@@ -11,10 +11,12 @@ export class ThirdPersonControls extends BaseKeyboardControls {
   disabled: boolean
   lookBackward: boolean
   isMouseLocked: boolean
+  raycaster: THREE.Raycaster
 
   constructor(params: Params) {
     super(params)
     this.isMouseLocked = false
+    this.raycaster = new THREE.Raycaster()
     this.disable()
     this.startMouseListeners()
   }
@@ -26,6 +28,26 @@ export class ThirdPersonControls extends BaseKeyboardControls {
     }
 
     super.update()
+
+    const cameraPosition = new THREE.Vector3()
+    this.camera.getWorldPosition(cameraPosition)
+    const offset = new THREE.Vector3(0, 0, 3)
+    offset.applyQuaternion(this.camera.quaternion)
+    cameraPosition.add(offset)
+
+    // const direction = new THREE.Vector3()
+    // this.target.mesh.getWorldPosition(direction)
+    // direction.sub(cameraPosition).normalize()
+    // this.raycaster.set(cameraPosition, direction)
+    // this.raycaster.far = 7
+    // const intersects = this.raycaster.intersectObjects(this.engine.scene.children, true)
+
+    // this.engine.scene.traverse((object) => {
+    //   if (object instanceof THREE.Mesh) {
+    //     const isIntersected = intersects.some((intersect) => intersect.object === object)
+    //     object.material.opacity = THREE.MathUtils.lerp(object.material.opacity, isIntersected ? 0.5 : 1.0, 0.1)
+    //   }
+    // })
   }
 
   assignTarget(target: Character) {

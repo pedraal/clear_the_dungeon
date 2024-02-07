@@ -24,20 +24,6 @@
       outline: none;
     }
 
-    #playing-ui {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      color: #fff;
-      font-size: 1.5rem;
-      padding: 1rem;
-      font-family: sans-serif;
-      z-index: 10;
-      text-align: center;
-      display: none;
-    }
-
     #start {
       display: none;
       position: fixed;
@@ -49,23 +35,6 @@
       padding: 1rem;
       font-family: sans-serif;
       text-decoration: none;
-      z-index: 10;
-      text-align: center;
-    }
-
-    #game-over {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      color: #fff;
-      font-size: 5rem;
-      padding: 1rem;
-      font-family: sans-serif;
       z-index: 10;
       text-align: center;
     }
@@ -90,19 +59,7 @@
 </head>
 
 <body>
-  <div id="playing-ui">
-    <p>Time remaining : <span id="timer"></span></p>
-    <p>Score : <span class="score"></span></p>
-    <p>PB : <span class="personnal-best">0</span></p>
-  </div>
   <a id="start" href="#">Start</a>
-  <div id="game-over">
-    <div>
-      <p>Game over !</p>
-      <p>Score : <span class="score"></span></p>
-      <p>PB : <span class="personnal-best"></span></p>
-    </div>
-  </div>
   <div id="loading">
     <p>
       Loading...

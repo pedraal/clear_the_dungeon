@@ -27,6 +27,8 @@ export class Character extends GenericModel {
   stateMachine: CharacterStateMachine
   yHalfExtend: number
   fallingVelocity: number
+  bodyToMeshYOffset: number
+  bodyRadius: number
 
   constructor(params: Params) {
     super(params)
@@ -37,27 +39,28 @@ export class Character extends GenericModel {
 
     this.mesh = this.model.scene
     this.mesh.receiveShadow = true
+    this.mesh.castShadow = true
+    this.mesh.children[0].castShadow = true
     this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
 
     this.yHalfExtend = this.hitbox.getSize(new THREE.Vector3()).y / 2
 
-    this.body = this.engine.world.createRigidBody(
-      this.engine.rapier.RigidBodyDesc.kinematicPositionBased().setTranslation(
-        this.params.position.x,
-        this.params.position.y + this.yHalfExtend,
-        this.params.position.z,
-      ),
-    )
+    this.body = this.engine.world.createRigidBody(this.engine.rapier.RigidBodyDesc.kinematicPositionBased())
+
+    this.bodyToMeshYOffset = -0.4
+    this.bodyRadius = 0.5
 
     this.collider = this.engine.world.createCollider(
-      this.engine.rapier.ColliderDesc.capsule(this.yHalfExtend - 0.5, 0.5),
+      this.engine.rapier.ColliderDesc.cuboid(0.35, this.yHalfExtend + this.bodyToMeshYOffset, 0.35),
       this.body,
     )
 
-    this.kinematicController = this.engine.world.createCharacterController(0.1)
+    this.kinematicController = this.engine.world.createCharacterController(0)
     this.kinematicController.enableAutostep(0.7, 0.1, true)
     this.kinematicController.enableSnapToGround(0.1)
     this.kinematicController.setSlideEnabled(false)
+
+    this.setPosition(this.params.position)
 
     this.fallingVelocity = -5
 
@@ -83,13 +86,23 @@ export class Character extends GenericModel {
     this.engine.updatables.push(this)
   }
 
+  setPosition(position: { x: number; y: number; z: number }) {
+    this.body.setTranslation(
+      {
+        ...position,
+        y: position.y + this.yHalfExtend,
+      },
+      true,
+    )
+  }
+
   update(dt: number, elapsedTime: number) {
     this.mixer.update(dt)
     this.handleMovement(dt)
     this.stateMachine.currentState?.update(dt, elapsedTime)
 
     this.mesh.position.copy(this.body.translation() as unknown as THREE.Vector3)
-    this.mesh.position.y -= this.yHalfExtend
+    this.mesh.position.y -= this.yHalfExtend + this.bodyToMeshYOffset
     this.mesh.quaternion.copy(this.body.rotation() as unknown as THREE.Quaternion)
 
     this.controls?.updateCamera()
@@ -240,7 +253,7 @@ class JumpingState extends CharacterState {
   transitionTime = 0.1
   persistedVelocity = { x: 0, y: 0, z: 0 }
   initialVerticalVelocity = 3
-  rawDecelerationRate = 0.12
+  rawDecelerationRate = 10
   deceleleration = 0
   velocity = new THREE.Vector3()
 
@@ -249,7 +262,7 @@ class JumpingState extends CharacterState {
     this.persistedVelocity = this.machine.character.getControlsVelocity().multiplyScalar(1.25)
   }
 
-  update() {
+  update(dt) {
     const yVelocity = Math.max(
       this.initialVerticalVelocity - this.deceleleration,
       this.machine.character.fallingVelocity,
@@ -262,7 +275,7 @@ class JumpingState extends CharacterState {
       this.machine.setState('landing_jump')
     }
 
-    this.deceleleration += this.rawDecelerationRate
+    this.deceleleration += this.rawDecelerationRate * dt
   }
 }
 

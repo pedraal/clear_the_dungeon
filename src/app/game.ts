@@ -2,14 +2,12 @@ import { Character, Characters } from './character'
 import { MapControls } from './controls/map_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
-import { Coins } from './game/coins'
-import { GameMap } from './game/game_map'
-import { Score } from './game/score'
+import { MapParser } from './map_parser'
+import { alphaMap } from './maps/alpha'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine?: EngineParams
-  controls: 'tps' | 'map'
 }
 
 export class Game {
@@ -17,9 +15,8 @@ export class Game {
   engine: Engine
   stateMachine: GameStateMachine
   controls: ThirdPersonControls | MapControls
-  map: GameMap
+  map: MapParser
   character: Character
-  score: Score
 
   constructor(params: Params) {
     this.params = params
@@ -31,23 +28,16 @@ export class Game {
   init() {
     this.initControls()
     this.initMap()
-    this.initScore()
   }
 
   private initControls() {
-    if (this.params.controls === 'tps')
-      this.controls = new ThirdPersonControls({
-        engine: this.engine,
-      })
-    else if (this.params.controls === 'map') this.controls = new MapControls({ engine: this.engine })
+    this.controls = new ThirdPersonControls({
+      engine: this.engine,
+    })
   }
 
   private initMap() {
-    this.map = new GameMap(this.engine)
-  }
-
-  private initScore() {
-    this.score = new Score()
+    this.map = new MapParser({ engine: this.engine, definition: alphaMap })
   }
 
   initCharacter() {
@@ -141,10 +131,8 @@ class IdleState extends GameState {
 class PlayingState extends GameState {
   name = 'playing'
   duration = 6000
-  coins: Coins
 
   enter() {
-    this.machine.game.score.reset()
     if (this.machine.game.controls instanceof ThirdPersonControls) {
       this.machine.game.controls.enable()
     }
@@ -152,40 +140,24 @@ class PlayingState extends GameState {
       { ...this.machine.game.map.spawn, y: this.machine.game.map.spawn.y + this.machine.game.character.yHalfExtend },
       true,
     )
-    // this.coins = new Coins(this.machine.game)
-    if (this.playingUiEl) this.playingUiEl.style.display = 'block'
   }
 
   update(deltaTime: number) {
     this.duration -= deltaTime
-    if (this.timerEl) this.timerEl.innerHTML = this.duration.toFixed(2)
 
     if (this.duration <= 0) {
       this.machine.setState('game-over')
     }
   }
 
-  exit() {
-    // this.coins.remove()
-    if (this.playingUiEl) this.playingUiEl.style.display = 'none'
-  }
-
-  get playingUiEl() {
-    return document.querySelector<HTMLElement>('#playing-ui')
-  }
-
-  get timerEl() {
-    return document.querySelector<HTMLElement>('#timer')
-  }
+  exit() {}
 }
 
 class GameOverState extends GameState {
   name = 'game-over'
   duration = 5
 
-  enter() {
-    if (this.gameOverEl) this.gameOverEl.style.display = 'flex'
-  }
+  enter() {}
 
   update(deltaTime: number) {
     this.duration -= deltaTime
@@ -194,11 +166,5 @@ class GameOverState extends GameState {
     }
   }
 
-  exit() {
-    if (this.gameOverEl) this.gameOverEl.style.display = 'none'
-  }
-
-  get gameOverEl() {
-    return document.querySelector<HTMLElement>('#game-over')
-  }
+  exit() {}
 }
