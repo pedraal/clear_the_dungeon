@@ -35,20 +35,19 @@ export class ThirdPersonControls extends BaseKeyboardControls {
     offset.applyQuaternion(this.camera.quaternion)
     cameraPosition.add(offset)
 
-    const direction = new THREE.Vector3()
-    this.target.mesh.getWorldPosition(direction)
-    direction.sub(cameraPosition).normalize()
-    this.raycaster.set(cameraPosition, direction)
-    this.raycaster.far = 7
-    const intersects = this.raycaster.intersectObjects(this.engine.scene.children, true)
+    // const direction = new THREE.Vector3()
+    // this.target.mesh.getWorldPosition(direction)
+    // direction.sub(cameraPosition).normalize()
+    // this.raycaster.set(cameraPosition, direction)
+    // this.raycaster.far = 7
+    // const intersects = this.raycaster.intersectObjects(this.engine.scene.children, true)
 
-    this.engine.scene.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        const isIntersected = intersects.some((intersect) => intersect.object === object)
-
-        object.material.opacity = THREE.MathUtils.lerp(object.material.opacity, isIntersected ? 0.5 : 1.0, 0.1)
-      }
-    })
+    // this.engine.scene.traverse((object) => {
+    //   if (object instanceof THREE.Mesh) {
+    //     const isIntersected = intersects.some((intersect) => intersect.object === object)
+    //     object.material.opacity = THREE.MathUtils.lerp(object.material.opacity, isIntersected ? 0.5 : 1.0, 0.1)
+    //   }
+    // })
   }
 
   assignTarget(target: Character) {

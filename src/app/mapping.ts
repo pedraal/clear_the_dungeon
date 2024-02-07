@@ -32,13 +32,14 @@ export class Mapping extends GenericModel {
 
     this.model = GLTFUtils.cloneGltf(Mapping.gltfs[this.params.name]) as GLTF
 
-    this.mesh = this.model.scene.children[0].clone(true) as THREE.Mesh
-    if (this.mesh.material instanceof THREE.Material) {
-      this.mesh.material.transparent = true
-    }
+    const mesh = this.model.scene.children[0].clone(true) as THREE.Mesh
+    this.mesh = new THREE.Mesh(mesh.geometry.clone(), mesh.material)
+    // if (this.mesh.material instanceof THREE.Material) {
+    //   this.mesh.material.transparent = true
+    // }
     this.mesh.receiveShadow = true
     this.mesh.rotation.y = Math.PI * (this.params.orientation || 0)
-    this.mesh.geometry = this.mesh.geometry.clone()
+    // this.mesh.geometry = this.mesh.geometry.clone()
     this.mesh.geometry.computeBoundingBox()
     this.mesh.geometry.computeBoundingSphere()
     this.boundingBox = this.mesh.geometry.boundingBox as THREE.Box3
@@ -75,10 +76,11 @@ export class Mapping extends GenericModel {
     const colliderDesc = new this.engine.rapier.ColliderDesc(this.colliderShape)
 
     if (this.shape === 'trimesh') {
+      const centerMassOffset = CustomCenterMass[this.params.name] || { x: 0, y: 0, z: 0 }
       const center = this.boundingBox.getCenter(new THREE.Vector3())
       colliderDesc.setMassProperties(
         1,
-        { x: center.x, y: center.y, z: center.z },
+        { x: center.x, y: center.y + centerMassOffset.y, z: center.z },
         { x: 0, y: 0, z: 0 },
         { x: 0, y: 0, z: 0, w: 1 },
       )
@@ -121,8 +123,9 @@ export class Mapping extends GenericModel {
     this.engine.scene.remove(this.mesh)
   }
 
-  static async load() {
-    return GenericModel.load('mappings', 'glb', Object.values(Mappings))
+  static async loadMappings(mappings?: Set<Mappings>) {
+    const toLoad = mappings ? Array.from(mappings) : Object.values(Mappings)
+    return GenericModel.load('mappings', 'glb', toLoad)
   }
 }
 
@@ -334,4 +337,8 @@ export enum Mappings {
   wall_window_open_scaffold = 'wall_window_open_scaffold',
   wall_window_open = 'wall_window_open',
   wall = 'wall',
+}
+
+const CustomCenterMass = {
+  // [Mappings.wall_doorway]: { x: 0, y: 1.2, z: 0 },
 }

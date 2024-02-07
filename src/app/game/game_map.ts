@@ -3,11 +3,8 @@ import { Mapping, Mappings } from '../mapping'
 
 export class GameMap {
   cellSide = 4
-  xBoundings = [0, 10]
-  zBoundings = [0, 12]
   spawn: { x: number; y: number; z: number }
   engine: Engine
-  definition: Map<number, Map<number, Mapping[]>>
 
   constructor(engine: Engine) {
     this.engine = engine
@@ -16,43 +13,41 @@ export class GameMap {
       y: 1,
       z: 0 * this.cellSide,
     }
-    this.initDefinition()
-  }
-
-  initDefinition() {
-    this.definition = new Map<number, Map<number, Mapping[]>>()
-    for (let i = this.xBoundings[0]; i <= this.xBoundings[1]; i++) {
-      this.definition.set(i, new Map<number, Mapping[]>())
-      for (let j = this.zBoundings[0]; j <= this.zBoundings[1]; j++) {
-        this.definition.get(i)?.set(j, [])
-      }
-    }
   }
 
   generate() {
-    this.pushProp(0, 0, 0, (x, y, z) => {
-      return new Mapping({
-        engine: this.engine,
-        name: Mappings.floor_dirt_large,
-        position: { y, ...this.convertMapPosition(x, z) },
-      })
+    new Mapping({
+      engine: this.engine,
+      name: Mappings.wall_doorway_scaffold,
+      position: { x: 0, y: 0, z: -1.5 },
+      shape: 'convex',
     })
-  }
-
-  pushProp(x: number, y: number, z: number, block: (x: number, y: number, z: number) => Mapping) {
-    const prop = block(x, y, z)
-    this.getCell(x, z)?.push(prop)
-    return prop
-  }
-
-  getCell(x: number, z: number) {
-    return this.definition.get(x)?.get(z)
-  }
-
-  convertMapPosition(x: number, z: number) {
-    return {
-      x: x * this.cellSide,
-      z: z * this.cellSide,
-    }
+    new Mapping({
+      engine: this.engine,
+      name: Mappings.barrier,
+      position: { x: -2, y: 0, z: 0.5 },
+      orientation: 0.5,
+      shape: 'convex',
+    })
+    new Mapping({
+      engine: this.engine,
+      name: Mappings.barrier,
+      position: { x: 2, y: 0, z: 0.5 },
+      orientation: 0.5,
+      shape: 'convex',
+    })
+    new Mapping({
+      engine: this.engine,
+      name: Mappings.floor_dirt_large,
+      position: { x: 0, y: 0, z: 0 },
+      shape: 'convex',
+    })
+    new Mapping({
+      engine: this.engine,
+      name: Mappings.stairs,
+      position: { x: 0, y: 0, z: 6 },
+      orientation: 1,
+      shape: 'trimesh',
+    })
   }
 }

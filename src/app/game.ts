@@ -2,12 +2,12 @@ import { Character, Characters } from './character'
 import { MapControls } from './controls/map_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
-import { GameMap } from './game/game_map'
+import { MapParser } from './map_parser'
+import { alphaMap } from './maps/alpha'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
   engine?: EngineParams
-  controls: 'tps' | 'map'
 }
 
 export class Game {
@@ -15,7 +15,7 @@ export class Game {
   engine: Engine
   stateMachine: GameStateMachine
   controls: ThirdPersonControls | MapControls
-  map: GameMap
+  map: MapParser
   character: Character
 
   constructor(params: Params) {
@@ -31,15 +31,13 @@ export class Game {
   }
 
   private initControls() {
-    if (this.params.controls === 'tps')
-      this.controls = new ThirdPersonControls({
-        engine: this.engine,
-      })
-    else if (this.params.controls === 'map') this.controls = new MapControls({ engine: this.engine })
+    this.controls = new ThirdPersonControls({
+      engine: this.engine,
+    })
   }
 
   private initMap() {
-    this.map = new GameMap(this.engine)
+    this.map = new MapParser({ engine: this.engine, definition: alphaMap })
   }
 
   initCharacter() {

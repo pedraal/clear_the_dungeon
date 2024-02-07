@@ -2,7 +2,8 @@ import { Character, Characters } from './character'
 import { MapControls } from './controls/map_controls'
 import { ThirdPersonControls } from './controls/third_person_controls'
 import { Engine, Params as EngineParams } from './engine'
-import { SandboxMap } from './sandbox/sandbox_map'
+import { MapParser } from './map_parser'
+import { alphaMap } from './maps/alpha'
 import { State, StateMachine } from './utils/state_machine'
 
 interface Params {
@@ -15,11 +16,8 @@ export class Sandbox {
   engine: Engine
   stateMachine: SandboxStateMachine
   controls: ThirdPersonControls | MapControls
-  map: SandboxMap
+  map: MapParser
   character: Character
-
-  rowLength = 8
-  cellSize = 6
 
   constructor(params: Params) {
     this.params = params
@@ -34,15 +32,17 @@ export class Sandbox {
   }
 
   private initControls() {
-    if (this.params.controls === 'tps')
+    if (this.params.controls === 'tps') {
       this.controls = new ThirdPersonControls({
         engine: this.engine,
       })
-    else if (this.params.controls === 'map') this.controls = new MapControls({ engine: this.engine })
+    } else if (this.params.controls === 'map') {
+      this.controls = new MapControls({ engine: this.engine })
+    }
   }
 
   private initMap() {
-    this.map = new SandboxMap(this.engine)
+    this.map = new MapParser({ engine: this.engine, definition: alphaMap })
   }
 
   initCharacter() {
@@ -89,7 +89,7 @@ class LoadingState extends SandboxStateStateMachine {
 
   enter() {
     this.machine.sandbox.init()
-    this.machine.sandbox.engine.load().then(() => {
+    this.machine.sandbox.engine.load(this.machine.sandbox.map.mappingsSet()).then(() => {
       this.machine.sandbox.engine.init()
       this.machine.sandbox.map.generate()
       this.machine.sandbox.initCharacter()
@@ -113,12 +113,6 @@ class IdleState extends SandboxStateStateMachine {
     if (this.machine.sandbox.controls instanceof ThirdPersonControls) {
       this.machine.sandbox.controls.enable()
     }
-    this.machine.sandbox.character.body.setTranslation(
-      {
-        ...this.machine.sandbox.map.spawn,
-        y: this.machine.sandbox.map.spawn.y + this.machine.sandbox.character.yHalfExtend,
-      },
-      true,
-    )
+    this.machine.sandbox.character.setPosition(this.machine.sandbox.map.spawn)
   }
 }

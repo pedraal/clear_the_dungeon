@@ -6,6 +6,7 @@ new Sandbox({
   engine: {
     debugUi: true,
     physicsDebugger: PhysicDebuggerModes.On,
+    helpers: true,
   },
-  controls: 'tps',
+  controls: 'map',
 })
